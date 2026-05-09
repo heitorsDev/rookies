@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import connect_db, disconnect_db
 from app.features.auth.routes import router as auth_router
+from app.features.component_types.routes import router as component_types_router
 
 
 @asynccontextmanager
@@ -31,6 +32,7 @@ app.add_middleware(
 
 
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(component_types_router, prefix="/api/v1")
 
 
 @app.get("/api/v1/health")
