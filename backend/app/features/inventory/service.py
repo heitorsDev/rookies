@@ -1,5 +1,7 @@
 import re
 
+from mongoengine import Q
+
 from app.features.component_types.models import ComponentType
 from app.features.components.models import Component
 
@@ -37,22 +39,22 @@ def list_inventory(
 
     if q is not None and q.strip():
         escaped = re.escape(q.strip())
-        query["$or"] = [
-            {"code": {"$regex": escaped, "$options": "i"}},
-            {"notes": {"$regex": escaped, "$options": "i"}},
-        ]
+        query["__raw__"] = {
+            "$or": [
+                {"code": {"$regex": escaped, "$options": "i"}},
+                {"notes": {"$regex": escaped, "$options": "i"}},
+            ]
+        }
 
-    total = Component.objects(**query).count()
+    query_obj = Component.objects(**query)
+    total = query_obj.count()
 
     sort_prefix = "" if sort_dir == "asc" else "-"
     sort_str = f"{sort_prefix}{sort_by}"
 
     skip = (page - 1) * page_size
     items = list(
-        Component.objects(**query)
-        .order_by(sort_str)
-        .skip(skip)
-        .limit(page_size)
+        query_obj.order_by(sort_str).skip(skip).limit(page_size)
     )
 
     return items, total
