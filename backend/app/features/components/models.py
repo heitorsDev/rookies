@@ -5,6 +5,7 @@ from mongoengine import (
     DictField,
     Document,
     EmbeddedDocument,
+    EmbeddedDocumentField,
     EmbeddedDocumentListField,
     IntField,
     ReferenceField,
