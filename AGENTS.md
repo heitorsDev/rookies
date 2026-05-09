@@ -42,6 +42,7 @@ Rookies is an internal team tool for registering, tracking, and diagnosing elect
 
 - Access to Rookies is **restricted to registered team members only**. All API endpoints (except `/auth/login` and `/health`) require a valid JWT access token.
 - Team members are **pre-registered by an admin** (another team member with the `admin` role). There is no public self-registration flow.
+- After creation, the member receives a one-time activation token from the admin. The member uses this token to set their own password via `POST /auth/activate`. All subsequent logins use username + password.
 - There are two roles: `member` and `admin`. See [Section 2.1.1](#211-roles--permissions) for the permission matrix.
 - Any authenticated team member can: view the inventory, register new components, update component attributes, and change component status.
 - All mutations (create, update) record the acting member's identity in the history log automatically via the JWT payload — no manual "your name" input is needed.
@@ -273,14 +274,15 @@ class Member(Document):
     username     = StringField(required=True, unique=True)  # Login handle, e.g. "joaosilva"
     role         = StringField(required=True, choices=['member', 'admin'], default='member')
     is_active    = BooleanField(default=True)           # False = account revoked
-    login_token_hash = StringField()                    # bcrypt hash of the current login token
+    login_token_hash = StringField()                    # bcrypt hash of the one-time activation token
     token_issued_at  = DateTimeField()                  # when the current token was generated
+    password_hash    = StringField()                    # bcrypt hash of the member's chosen password
     created_at   = DateTimeField()
     updated_at   = DateTimeField()
     created_by   = StringField()                        # username of the admin who created this account
 ```
 
-> **Note on `login_token_hash`**: The system uses server-generated one-time tokens as the member's "password". The raw token is shown to the admin exactly once at generation time and never stored. Only the bcrypt hash is persisted. See [Section 7](#7-authentication-system) for the full flow.
+> **Note on authentication flow**: The system uses a two-step authentication process. First, an admin creates the account and a one-time activation token is generated (shown exactly once, only the bcrypt hash is stored). The member then uses this token to activate their account and set their own password. All subsequent logins use username + password. See [Section 7.5](#75-auth) for the API contract.
 
 ### 5.2 FieldDefinition (Embedded)
 
@@ -555,6 +557,58 @@ Provides the team overview of all components.
 |---|---|---|
 | `GET` | `/health` | Returns `{"status": "ok"}` — used by uptime monitors |
 
+### 7.5 Auth
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `POST` | `/auth/seed` | Seed key (query) | Bootstrap the first admin account |
+| `POST` | `/auth/members` | Admin JWT | Create a new member and return a one-time activation token |
+| `POST` | `/auth/tokens` | Admin JWT | Generate a new activation token for a member |
+| `POST` | `/auth/activate` | None | Activate an account using the one-time token and set a password |
+| `POST` | `/auth/login` | None | Log in with username + password, returns a JWT |
+| `GET` | `/auth/members` | Admin JWT | List all members |
+
+**POST `/auth/activate` request body:**
+```json
+{
+  "username": "joaosilva",
+  "token": "<one-time-token-from-admin>",
+  "password": "my-secure-password"
+}
+```
+
+**POST `/auth/activate` response:**
+```json
+{
+  "detail": "Account activated. You can now log in with your password."
+}
+```
+
+**POST `/auth/login` request body:**
+```json
+{
+  "username": "joaosilva",
+  "password": "my-secure-password"
+}
+```
+
+**POST `/auth/login` response:**
+```json
+{
+  "access_token": "<jwt>",
+  "token_type": "bearer",
+  "member": {
+    "name": "João Silva",
+    "username": "joaosilva",
+    "role": "member",
+    "is_active": true,
+    "is_activated": true,
+    "created_at": "2025-03-10T14:30:00Z",
+    "created_by": "admin_user"
+  }
+}
+```
+
 ---
 
 ## 8. Frontend Structure
@@ -564,6 +618,8 @@ Provides the team overview of all components.
 | Route | Description |
 |---|---|
 | `/` | Redirect to `/inventory` |
+| `/activate` | Activate account using one-time token and set password |
+| `/login` | Login with username and password |
 | `/inventory` | Component inventory list with filters |
 | `/inventory/[code]` | Component detail page |
 | `/inventory/[code]/edit` | Edit component attributes and status |

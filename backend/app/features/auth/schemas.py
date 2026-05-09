@@ -3,9 +3,15 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class LoginRequest(BaseModel):
+class ActivateRequest(BaseModel):
     username: str
     token: str
+    password: str
+
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 
 class LoginResponse(BaseModel):
@@ -21,6 +27,7 @@ class MemberOut(BaseModel):
     is_active: bool
     created_at: datetime
     created_by: str | None = None
+    is_activated: bool = False
 
     model_config = {"from_attributes": True}
 
@@ -34,3 +41,7 @@ class MemberCreate(BaseModel):
 class TokenResponse(BaseModel):
     token: str
     username: str
+
+
+class MessageResponse(BaseModel):
+    detail: str

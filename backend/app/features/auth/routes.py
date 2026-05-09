@@ -7,20 +7,30 @@ from app.features.auth import service
 from app.features.auth.dependencies import get_current_member, require_admin
 from app.features.auth.models import Member
 from app.features.auth.schemas import (
+    ActivateRequest,
     LoginRequest,
     LoginResponse,
     MemberCreate,
     MemberOut,
+    MessageResponse,
     TokenResponse,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+@router.post("/activate", response_model=MessageResponse)
+async def activate(body: ActivateRequest):
+    member = await asyncio.to_thread(
+        service.activate_member, body.username, body.token, body.password
+    )
+    return MessageResponse(detail="Account activated. You can now log in with your password.")
+
+
 @router.post("/login", response_model=LoginResponse)
 async def login(body: LoginRequest):
     access_token = await asyncio.to_thread(
-        service.authenticate, body.username, body.token
+        service.authenticate, body.username, body.password
     )
     member = await asyncio.to_thread(service.get_member_by_username, body.username)
     return LoginResponse(
@@ -47,7 +57,13 @@ async def create_member(
 @router.get("/members", response_model=list[MemberOut])
 async def list_members(admin: Member = Depends(require_admin)):
     members = await asyncio.to_thread(service.list_members)
-    return [MemberOut.model_validate(m) for m in members]
+
+    def member_to_out(m):
+        out = MemberOut.model_validate(m)
+        out.is_activated = service.is_activated(m)
+        return out
+
+    return [await asyncio.to_thread(member_to_out, m) for m in members]
 
 
 @router.post("/tokens", response_model=TokenResponse)

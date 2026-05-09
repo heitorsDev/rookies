@@ -22,10 +22,12 @@ def _verify_token(token: str, token_hash: str) -> bool:
     return bcrypt.checkpw(token.encode(), token_hash.encode())
 
 
-def _invalidate_token(member: Member):
-    member.login_token_hash = None
-    member.token_issued_at = None
-    member.save()
+def _hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+
+def _verify_password(password: str, password_hash: str) -> bool:
+    return bcrypt.checkpw(password.encode(), password_hash.encode())
 
 
 def _create_jwt(member: Member) -> str:
@@ -87,11 +89,16 @@ def generate_token(member: Member) -> str:
     raw_token = secrets.token_urlsafe(32)
     member.login_token_hash = _hash_token(raw_token)
     member.token_issued_at = _utcnow()
+    member.password_hash = None
     member.save()
     return raw_token
 
 
-def authenticate(username: str, raw_token: str) -> str:
+def is_activated(member: Member) -> bool:
+    return bool(member.password_hash)
+
+
+def activate_member(username: str, raw_token: str, password: str) -> Member:
     member = Member.objects(username=username).first()
     if not member:
         raise HTTPException(
@@ -105,10 +112,16 @@ def authenticate(username: str, raw_token: str) -> str:
             detail="Account is deactivated",
         )
 
+    if is_activated(member):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Account is already activated",
+        )
+
     if not member.login_token_hash:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or token",
+            detail="No activation token issued. Ask an admin to generate one.",
         )
 
     if not _verify_token(raw_token, member.login_token_hash):
@@ -117,7 +130,40 @@ def authenticate(username: str, raw_token: str) -> str:
             detail="Invalid username or token",
         )
 
-    _invalidate_token(member)
+    member.password_hash = _hash_password(password)
+    member.login_token_hash = None
+    member.token_issued_at = None
+    member.save()
+
+    return member
+
+
+def authenticate(username: str, password: str) -> str:
+    member = Member.objects(username=username).first()
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
+    if not member.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account is deactivated",
+        )
+
+    if not is_activated(member):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account not activated. Ask an admin for an activation token.",
+        )
+
+    if not _verify_password(password, member.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+        )
+
     return _create_jwt(member)
 
 
