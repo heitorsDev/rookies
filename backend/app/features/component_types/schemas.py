@@ -1,7 +1,8 @@
 import re
 from datetime import datetime
 
-from pydantic import BaseModel, field_validator
+from bson import ObjectId
+from pydantic import BaseModel, field_validator, model_validator
 
 SLUG_REGEX = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
@@ -46,9 +47,7 @@ class FieldDefinitionIn(BaseModel):
     @field_validator("options")
     @classmethod
     def validate_options(cls, v: list[str] | None, info) -> list[str] | None:
-        if v is not None and not v:
-            raise ValueError("options must be a non-empty list when provided")
-        return v
+        return v or None
 
 
 class FieldDefinitionOut(FieldDefinitionIn):
@@ -107,3 +106,10 @@ class ComponentTypeOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def convert_objectid(cls, data):
+        if hasattr(data, "id") and isinstance(data.id, ObjectId):
+            data.id = str(data.id)
+        return data

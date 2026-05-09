@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, Depends, Query
 
 from app.features.auth.dependencies import get_current_member, require_admin
@@ -23,7 +25,7 @@ async def get_component_types(
     include_archived: bool = Query(False),
     _: Member = Depends(get_current_member),
 ):
-    return list_component_types(include_archived=include_archived)
+    return await asyncio.to_thread(list_component_types, include_archived=include_archived)
 
 
 @router.post("", response_model=ComponentTypeOut, status_code=201)
@@ -31,7 +33,7 @@ async def post_component_type(
     data: ComponentTypeCreate,
     _: Member = Depends(get_current_member),
 ):
-    return create_component_type(data)
+    return await asyncio.to_thread(create_component_type, data)
 
 
 @router.get("/{slug}", response_model=ComponentTypeOut)
@@ -39,7 +41,7 @@ async def get_component_type(
     slug: str,
     _: Member = Depends(get_current_member),
 ):
-    return get_component_type_by_slug(slug)
+    return await asyncio.to_thread(get_component_type_by_slug, slug)
 
 
 @router.put("/{slug}", response_model=ComponentTypeOut)
@@ -48,7 +50,7 @@ async def put_component_type(
     data: ComponentTypeUpdate,
     _: Member = Depends(get_current_member),
 ):
-    return update_component_type(slug, data)
+    return await asyncio.to_thread(update_component_type, slug, data)
 
 
 @router.delete("/{slug}", response_model=ComponentTypeOut)
@@ -56,4 +58,4 @@ async def delete_component_type(
     slug: str,
     _: Member = Depends(require_admin),
 ):
-    return archive_component_type(slug)
+    return await asyncio.to_thread(archive_component_type, slug)

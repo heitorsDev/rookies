@@ -39,3 +39,7 @@ class ComponentType(Document):
     is_archived = BooleanField(default=False)
     created_at = DateTimeField(default=datetime.utcnow)
     updated_at = DateTimeField(default=datetime.utcnow)
+
+    @property
+    def id(self) -> str:
+        return str(self.pk)

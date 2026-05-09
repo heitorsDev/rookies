@@ -1,4 +1,4 @@
-# Rookies — Technical Specification & Business Rules
+﻿# Rookies — Technical Specification & Business Rules
 
 > **Purpose**: This document defines the business rules, architecture decisions, data models, API contracts, and development guidelines for the Rookies project. It is intended to be used as the single source of truth for all development work on this project.
 
@@ -740,6 +740,7 @@ Replace Base64 attachment storage with Cloudinary (free tier: 25 GB storage, 25 
 
 ### 12.1 Backend
 
+- **Always activate the virtual environment** before running Python commands. Run `.\venv\Scripts\Activate` (Windows) or `source venv/bin/activate` (macOS/Linux) first (ON THE BACKEND FOLDER). This avoids the "Defaulting to user installation because normal site-packages is not writeable" error and ensures packages are installed in the correct environment.
 - Use `async` FastAPI route handlers throughout.
 - MongoEngine operates synchronously; use `asyncio.to_thread()` to wrap blocking ODM calls in async routes to avoid blocking the event loop.
 - All service functions must raise typed `HTTPException`s with clear `detail` messages rather than returning error dicts.
@@ -789,7 +790,68 @@ sequence = counter.value
 
 ---
 
-## 13. Environment & Deployment
+## 13. Local Development Setup
+
+### 13.1 Backend
+
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
+
+2. Activate the virtual environment:
+   ```powershell
+   # Windows
+   .\.venv\Scripts\Activate
+
+   # macOS/Linux
+   source .venv/bin/activate
+   ```
+
+3. Install dependencies:
+   ```powershell
+   pip install -r requirements.txt
+   ```
+
+4. Copy `.env.example` to `.env` and configure:
+   ```
+   MONGODB_URI=mongodb://localhost:27017/rookies
+   FRONTEND_ORIGIN=http://localhost:3000
+   JWT_SECRET=change-me-to-a-random-secret
+   SEED_KEY=dev-seed-key-123
+   ```
+
+5. Ensure MongoDB is running locally (or update `MONGODB_URI` to point to your MongoDB Atlas instance).
+
+6. Run the backend server:
+   ```powershell
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+7. Access the API at `http://localhost:8000`. The interactive docs are at `http://localhost:8000/docs`.
+
+8. **Seed the first admin account** (first time only):
+   ```powershell
+   curl -X POST "http://localhost:8000/api/v1/auth/seed?key=dev-seed-key-123"
+   ```
+   This creates the first admin account. Update the admin's username/password via `POST /auth/activate`.
+
+### 13.2 CLI Commands
+
+The backend includes a CLI for admin tasks. Run from the `backend/` directory with the venv activated:
+
+```powershell
+# Activate venv first, then:
+python -m app.cli --help
+```
+
+Available commands:
+- `python -m app.cli seed-admin` — Bootstrap the first admin account
+- `python -m app.cli list-members` — List all registered members
+
+---
+
+## 14. Environment & Deployment
 
 ### Backend `.env.example`
 
@@ -814,9 +876,9 @@ NEXT_PUBLIC_API_URL=https://your-backend.onrender.com/api/v1
 
 ---
 
-## 14. Design System & Color Palette
+## 15. Design System & Color Palette
 
-### 14.1 Color Palette
+### 15.1 Color Palette
 
 The Rookies frontend uses a fixed color palette sourced from [Colorhunt](https://colorhunt.co/palette/2016581d24ca98abeef9e8c9):
 
@@ -829,7 +891,7 @@ The Rookies frontend uses a fixed color palette sourced from [Colorhunt](https:/
 
 CSS custom properties are defined in `frontend/src/app/globals.css` under `:root` (light) and `.dark` (dark) selectors. All shadcn/ui variables are mapped to this palette.
 
-### 14.2 Theme Tokens
+### 15.2 Theme Tokens
 
 - **Light mode**: Cream-tinted background (`#faf7f2`), deep navy text (`#201658`), vibrant blue primary (`#1D24CA`), dark sidebar (`#201658`).
 - **Dark mode**: Deep navy background (`#201658`), cream text (`#f9e8c9`), soft blue primary (`#98ABEE`).
