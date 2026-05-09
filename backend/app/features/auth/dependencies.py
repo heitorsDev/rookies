@@ -1,24 +1,39 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.features.auth.models import Member
+from app.features.auth.service import decode_jwt, get_member_by_username
+
 security = HTTPBearer()
 
 
 async def get_current_member(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-):
-    """Dependency that extracts and validates the JWT from the Authorization header."""
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Auth not yet implemented",
-    )
+) -> Member:
+    payload = decode_jwt(credentials.credentials)
+    username = payload.get("sub")
+    if not username:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
+
+    member = get_member_by_username(username)
+    if not member.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Account is deactivated",
+        )
+
+    return member
 
 
 async def require_admin(
-    current_member=Depends(get_current_member),
-):
-    """Dependency that ensures the current member is an admin."""
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail="Auth not yet implemented",
-    )
+    current_member: Member = Depends(get_current_member),
+) -> Member:
+    if current_member.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_member

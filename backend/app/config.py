@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     jwt_secret: str = "change-me-to-a-random-secret"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440  # 24 hours
+    seed_key: str = ""
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
