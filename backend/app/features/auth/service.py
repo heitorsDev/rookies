@@ -1,5 +1,5 @@
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import bcrypt
 import jwt
@@ -10,6 +10,10 @@ from app.config import settings
 from app.features.auth.models import Member
 
 
+def _utcnow():
+    return datetime.now(timezone.utc)
+
+
 def _hash_token(token: str) -> str:
     return bcrypt.hashpw(token.encode(), bcrypt.gensalt()).decode()
 
@@ -18,8 +22,14 @@ def _verify_token(token: str, token_hash: str) -> bool:
     return bcrypt.checkpw(token.encode(), token_hash.encode())
 
 
+def _invalidate_token(member: Member):
+    member.login_token_hash = None
+    member.token_issued_at = None
+    member.save()
+
+
 def _create_jwt(member: Member) -> str:
-    now = datetime.utcnow()
+    now = _utcnow()
     payload = {
         "sub": member.username,
         "role": member.role,
@@ -76,7 +86,7 @@ def create_member(
 def generate_token(member: Member) -> str:
     raw_token = secrets.token_urlsafe(32)
     member.login_token_hash = _hash_token(raw_token)
-    member.token_issued_at = datetime.utcnow()
+    member.token_issued_at = _utcnow()
     member.save()
     return raw_token
 
@@ -98,7 +108,7 @@ def authenticate(username: str, raw_token: str) -> str:
     if not member.login_token_hash:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No login token issued. Ask an admin to generate one.",
+            detail="Invalid username or token",
         )
 
     if not _verify_token(raw_token, member.login_token_hash):
@@ -107,6 +117,7 @@ def authenticate(username: str, raw_token: str) -> str:
             detail="Invalid username or token",
         )
 
+    _invalidate_token(member)
     return _create_jwt(member)
 
 
