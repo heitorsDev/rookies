@@ -20,6 +20,7 @@ class MemberOut(BaseModel):
     role: str
     is_active: bool
     created_at: datetime
+    created_by: str | None = None
 
     model_config = {"from_attributes": True}
 
