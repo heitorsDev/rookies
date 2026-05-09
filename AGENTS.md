@@ -814,4 +814,29 @@ NEXT_PUBLIC_API_URL=https://your-backend.onrender.com/api/v1
 
 ---
 
-*Document version: 1.0 — Generated for the Rookies project.*
+## 14. Design System & Color Palette
+
+### 14.1 Color Palette
+
+The Rookies frontend uses a fixed color palette sourced from [Colorhunt](https://colorhunt.co/palette/2016581d24ca98abeef9e8c9):
+
+| Hex | Role (Light) | Role (Dark) |
+|---|---|---|
+| `#201658` | Foreground text, sidebar background | Background |
+| `#1D24CA` | Primary (buttons, links, rings) | Secondary/accent |
+| `#98ABEE` | Secondary, accent, chart-2 | Primary, sidebar ring |
+| `#F9E8C9` | — (sidebar text, chart-4) | Foreground text |
+
+CSS custom properties are defined in `frontend/src/app/globals.css` under `:root` (light) and `.dark` (dark) selectors. All shadcn/ui variables are mapped to this palette.
+
+### 14.2 Theme Tokens
+
+- **Light mode**: Cream-tinted background (`#faf7f2`), deep navy text (`#201658`), vibrant blue primary (`#1D24CA`), dark sidebar (`#201658`).
+- **Dark mode**: Deep navy background (`#201658`), cream text (`#f9e8c9`), soft blue primary (`#98ABEE`).
+- **Fonts**: Geist (sans) and Geist Mono from `next/font/google`.
+- **Border radius**: `0.5rem` base with scaled variants (`sm`→`0.3rem` to `4xl`→`1.3rem`).
+- **Destructive**: `#e53e3e` (light), `#fc6b6b` (dark).
+
+---
+
+*Document version: 1.1 — Updated with design system and color palette.*
