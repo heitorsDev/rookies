@@ -1,6 +1,22 @@
+import re
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+
+SLUG_REGEX = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+
+ALLOWED_FIELD_TYPES = {
+    "text",
+    "number",
+    "boolean",
+    "select",
+    "multiselect",
+    "range",
+    "textarea",
+    "file",
+    "auto",
+    "date",
+}
 
 
 class FieldDefinitionIn(BaseModel):
@@ -18,6 +34,26 @@ class FieldDefinitionIn(BaseModel):
     auto: bool = False
     auto_hint: str | None = None
 
+    @field_validator("field_type")
+    @classmethod
+    def validate_field_type(cls, v: str) -> str:
+        if v not in ALLOWED_FIELD_TYPES:
+            raise ValueError(
+                f"Invalid field_type '{v}'. Allowed: {', '.join(sorted(ALLOWED_FIELD_TYPES))}"
+            )
+        return v
+
+    @field_validator("options")
+    @classmethod
+    def validate_options(cls, v: list[str] | None, info) -> list[str] | None:
+        if v is not None and not v:
+            raise ValueError("options must be a non-empty list when provided")
+        return v
+
+
+class FieldDefinitionOut(FieldDefinitionIn):
+    model_config = {"from_attributes": True}
+
 
 class ComponentTypeCreate(BaseModel):
     name: str
@@ -25,11 +61,39 @@ class ComponentTypeCreate(BaseModel):
     description: str | None = None
     fields: list[FieldDefinitionIn] = []
 
+    @field_validator("slug")
+    @classmethod
+    def validate_slug(cls, v: str) -> str:
+        v = v.lower().strip()
+        if not SLUG_REGEX.match(v):
+            raise ValueError(
+                "Slug must be lowercase alphanumeric with hyphens (e.g. 'falcon-500')"
+            )
+        return v
+
+    @field_validator("fields")
+    @classmethod
+    def validate_field_ids_unique(cls, v: list[FieldDefinitionIn]) -> list[FieldDefinitionIn]:
+        ids = [f.field_id for f in v]
+        if len(ids) != len(set(ids)):
+            raise ValueError("field_id values must be unique within a component type")
+        return v
+
 
 class ComponentTypeUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     fields: list[FieldDefinitionIn] | None = None
+
+    @field_validator("fields")
+    @classmethod
+    def validate_field_ids_unique(cls, v: list[FieldDefinitionIn] | None) -> list[FieldDefinitionIn] | None:
+        if v is None:
+            return v
+        ids = [f.field_id for f in v]
+        if len(ids) != len(set(ids)):
+            raise ValueError("field_id values must be unique within a component type")
+        return v
 
 
 class ComponentTypeOut(BaseModel):
@@ -37,7 +101,7 @@ class ComponentTypeOut(BaseModel):
     name: str
     slug: str
     description: str | None
-    fields: list[FieldDefinitionIn]
+    fields: list[FieldDefinitionOut]
     is_archived: bool
     created_at: datetime
     updated_at: datetime
