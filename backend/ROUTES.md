@@ -2,6 +2,8 @@
 
 > Base URL: `/api/v1`
 
+> **⚠️ IMPORTANT: This document must be updated whenever routes, schemas, or business rules change. Keeping it in sync is a required part of every backend PR.**
+
 ---
 
 ## Authentication
