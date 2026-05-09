@@ -16,6 +16,7 @@ class Member(Document):
     is_active = BooleanField(default=True)
     login_token_hash = StringField()
     token_issued_at = DateTimeField()
+    password_hash = StringField()
     created_at = DateTimeField(default=_utcnow)
     updated_at = DateTimeField(default=_utcnow)
     created_by = StringField()
