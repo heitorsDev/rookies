@@ -66,6 +66,13 @@ async def list_members(admin: Member = Depends(require_admin)):
     return [await asyncio.to_thread(member_to_out, m) for m in members]
 
 
+@router.get("/members/me", response_model=MemberOut)
+async def get_current_member_info(member: Member = Depends(get_current_member)):
+    out = MemberOut.model_validate(member)
+    out.is_activated = service.is_activated(member)
+    return out
+
+
 @router.post("/tokens", response_model=TokenResponse)
 async def generate_login_token(
     username: str = Query(description="Username of the member"),

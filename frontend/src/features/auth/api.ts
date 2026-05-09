@@ -44,4 +44,5 @@ export const authApi = {
   createMember: (data: CreateMemberRequest) =>
     api.post<CreateMemberResponse>("/auth/members", data),
   listMembers: () => api.get<MemberResponse[]>("/auth/members"),
+  getCurrentMember: () => api.get<MemberResponse>("/auth/members/me"),
 };
