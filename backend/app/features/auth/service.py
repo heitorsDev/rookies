@@ -121,7 +121,7 @@ def activate_member(username: str, raw_token: str, password: str) -> Member:
     if not member.login_token_hash:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No activation token issued. Ask an admin to generate one.",
+            detail="Invalid username or token",
         )
 
     if not _verify_token(raw_token, member.login_token_hash):
@@ -155,7 +155,7 @@ def authenticate(username: str, password: str) -> str:
     if not is_activated(member):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Account not activated. Ask an admin for an activation token.",
+            detail="Invalid username or password",
         )
 
     if not _verify_password(password, member.password_hash):
