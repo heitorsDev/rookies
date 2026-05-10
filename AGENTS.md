@@ -566,12 +566,12 @@ Provides the team overview of all components.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/auth/seed` | Seed key (query) | Bootstrap the first admin account |
+| `POST` | `/auth/seed` | None | Bootstrap the first admin account (username, name, password in body) |
+| `GET` | `/auth/members` | Admin JWT | List all members (query: `check_empty=true` returns only `{"exists": true/false}`) |
 | `POST` | `/auth/members` | Admin JWT | Create a new member and return a one-time activation token |
 | `POST` | `/auth/tokens` | Admin JWT | Generate a new activation token for a member |
 | `POST` | `/auth/activate` | None | Activate an account using the one-time token and set a password |
 | `POST` | `/auth/login` | None | Log in with username + password, returns a JWT |
-| `GET` | `/auth/members` | Admin JWT | List all members |
 
 **POST `/auth/activate` request body:**
 ```json
@@ -622,7 +622,8 @@ Provides the team overview of all components.
 
 | Route | Description |
 |---|---|
-| `/` | Redirect to `/inventory` |
+| `/` | Redirect to `/inventory` (authenticated) or `/setup` (if no admin) or `/login` |
+| `/setup` | First-time admin account creation (only accessible when no admin exists) |
 | `/activate` | Activate account using one-time token and set password |
 | `/login` | Login with username and password |
 | `/inventory` | Component inventory list with filters |
@@ -649,6 +650,53 @@ Provides the team overview of all components.
 - **Component detail page**: Displays all diagnostic data fields with their labels and units, current status with a change dropdown, notes, history timeline, and attachment viewer.
 - **Dynamic form**: Rendered by the `DynamicForm` component based on the schema fetched from the selected component type. See [Section 9](#9-dynamic-form-engine).
 - **Schema builder** (`/types/new`, `/types/[slug]/edit`): A drag-and-drop field editor allowing the team to add, reorder, and configure field definitions visually without writing code. The `/types/new` route must be accessible at any time via the sidebar — users should not need an existing component type to start building a schema.
+
+### Admin Setup via UI (`/setup`)
+
+When no admin account exists in the system (first-time setup), unauthenticated users are redirected to the `/setup` route to bootstrap the first admin account.
+
+**Flow:**
+1. User navigates to `/setup` (or is redirected there from `/`)
+2. The page checks `GET /api/v1/auth/members?check_empty=true` to verify no accounts exist
+3. If no accounts exist, a setup form is displayed:
+   - **Username**: Admin's desired login handle (e.g., `admin`, `joaosilva`)
+   - **Name**: Admin's display name (e.g., "João Silva")
+   - **Password**: Initial password for the admin account
+4. On submit, the frontend calls `POST /api/v1/auth/seed` with the provided credentials
+5. Upon success, the user is redirected to `/login` with a success message
+
+**API Endpoint:**
+```
+POST /api/v1/auth/seed
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "name": "Admin User",
+  "password": "my-secure-password"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "Admin account created successfully",
+  "username": "admin"
+}
+```
+
+**UI Implementation Details:**
+- The `/setup` page is a Server Component that performs the initial check
+- The setup form is a Client Component with React Hook Form + Zod validation
+- Password must meet minimum requirements (8+ characters, shown as typed/masked toggle)
+- The form prevents submission if passwords don't match
+- Error states are handled with toast notifications
+- On success, redirect to `/login` with a query param `?setup_success=true` to show a welcome message
+
+**Route Protection:**
+- The `/setup` route is only accessible when `GET /api/v1/auth/members?check_empty=true` returns `{"exists": false}`
+- If an admin already exists, accessing `/setup` redirects to `/login`
+- Non-existent endpoint alternative: `GET /api/v1/auth/health` or `GET /api/v1/health` with a specific response when no members exist
 
 ### Sidebar Implementation
 

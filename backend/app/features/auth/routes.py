@@ -12,7 +12,10 @@ from app.features.auth.schemas import (
     LoginResponse,
     MemberCreate,
     MemberOut,
+    MembersExistResponse,
     MessageResponse,
+    SeedFirstAdminRequest,
+    SeedResponse,
     TokenResponse,
 )
 
@@ -83,10 +86,44 @@ async def generate_login_token(
     return TokenResponse(token=raw_token, username=member.username)
 
 
-@router.post("/seed", response_model=TokenResponse)
-async def seed_first_admin(
+@router.post("/seed", response_model=SeedResponse)
+async def seed_first_admin(body: SeedFirstAdminRequest):
+    if not settings.seed_key:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Seed endpoint is not configured",
+        )
+
+    member, raw_token = await asyncio.to_thread(
+        service.seed_first_admin, body.name, body.username
+    )
+    await asyncio.to_thread(service.activate_member, body.username, raw_token, body.password)
+    return SeedResponse(message="Admin account created successfully", username=member.username)
+
+
+@router.get("/members")
+async def list_or_check_members(
+    check_empty: bool = Query(False, description="Check if any members exist"),
+):
+    if check_empty:
+        members = await asyncio.to_thread(service.list_members)
+        return MembersExistResponse(exists=len(members) > 0)
+
+    admin: Member = Depends(require_admin)  # noqa: F841
+    members = await asyncio.to_thread(service.list_members)
+
+    def member_to_out(m):
+        out = MemberOut.model_validate(m)
+        out.is_activated = service.is_activated(m)
+        return out
+
+    return [await asyncio.to_thread(member_to_out, m) for m in members]
+
+
+@router.post("/members", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+async def create_member(
     body: MemberCreate,
-    seed_key: str = Query(description="The seed key from env"),
+    admin: Member = Depends(require_admin),
 ):
     if not settings.seed_key:
         raise HTTPException(

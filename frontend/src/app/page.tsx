@@ -1,3 +1,4 @@
+import { SetupRedirect } from "@/components/SetupRedirect";
 import Link from "next/link";
 import {
   Cpu,
@@ -49,7 +50,9 @@ const features = [
 
 export default function LandingPage() {
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
+    <>
+      <SetupRedirect />
+      <div className="relative flex min-h-screen flex-col overflow-hidden">
       {/* Persistent noise overlay */}
       <div className="pointer-events-none fixed inset-0 z-50 opacity-[0.015] mix-blend-overlay">
         <div className="h-full w-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyPjxmZVR1cmJ1bGVuY2UgdHlwZT0iZnJhY3RhbE5vaXNlIiBiYXNlRnJlcXVlbmN5PSIuNzUiIG51bU9jdGF2ZXM9IjQiLz48L2ZpbHRlcj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] bg-repeat" />
@@ -79,11 +82,16 @@ export default function LandingPage() {
             <Link href="/login" className="text-xs tracking-wider text-[#98abee]/70 transition-colors hover:text-[#98abee] uppercase">
               Sign in
             </Link>
-            <Link
-              href="/activate"
+            <Link href="/activate"
               className="inline-flex h-8 items-center justify-center rounded-md border border-[#98abee]/20 bg-[#98abee]/10 px-3.5 text-xs font-medium tracking-wider text-[#98abee] transition-all hover:bg-[#98abee]/20 uppercase"
             >
               Activate
+            </Link>
+            <Link
+              href="/setup"
+              className="inline-flex h-8 items-center justify-center rounded-md bg-[#98abee] px-3.5 text-xs font-medium tracking-wider text-[#201658] transition-all hover:bg-[#98abee]/90 uppercase"
+            >
+              Get Started
             </Link>
           </nav>
         </div>
@@ -310,10 +318,10 @@ export default function LandingPage() {
               </p>
               <div className="mt-10 flex items-center justify-center gap-4">
                 <Link
-                  href="/login"
+                  href="/setup"
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[#98abee] px-5 text-sm font-medium text-[#201658] transition-all hover:bg-[#98abee]/90"
                 >
-                  Sign in
+                  Get Started
                   <ArrowRight className="size-3.5" />
                 </Link>
                 <Link
@@ -340,6 +348,7 @@ export default function LandingPage() {
           </p>
         </div>
       </footer>
-    </div>
+      </div>
+    </>
   );
 }

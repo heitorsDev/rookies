@@ -38,6 +38,21 @@ class MemberCreate(BaseModel):
     role: str = "member"
 
 
+class SeedFirstAdminRequest(BaseModel):
+    name: str
+    username: str
+    password: str
+
+
+class SeedResponse(BaseModel):
+    message: str
+    username: str
+
+
+class MembersExistResponse(BaseModel):
+    exists: bool
+
+
 class TokenResponse(BaseModel):
     token: str
     username: str
