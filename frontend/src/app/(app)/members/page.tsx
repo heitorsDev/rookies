@@ -11,7 +11,7 @@ import { Sidebar } from "@/components/Sidebar";
 
 export default function MembersPage() {
   const { member, isLoading: isAuthLoading } = useAuth();
-  const { data: members, isLoading: isMembersLoading } = useMembers();
+  const { data: members, isLoading: isMembersLoading, refetch } = useMembers();
   const router = useRouter();
 
   useEffect(() => {
@@ -68,7 +68,12 @@ export default function MembersPage() {
 
           <div>
             <h2 className="text-lg font-semibold text-foreground mb-4">All Members</h2>
-            <MemberTable members={members ?? []} isLoading={isMembersLoading} />
+            <MemberTable
+              members={members ?? []}
+              isLoading={isMembersLoading}
+              currentUsername={member.username}
+              onRefresh={refetch}
+            />
           </div>
         </div>
       </main>

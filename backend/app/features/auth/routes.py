@@ -111,3 +111,31 @@ async def generate_login_token(
     member = await asyncio.to_thread(service.get_member_by_username, username)
     raw_token = await asyncio.to_thread(service.generate_token, member)
     return TokenResponse(token=raw_token, username=member.username)
+
+
+@router.post("/members/{username}/deactivate")
+async def deactivate_member(
+    username: str,
+    admin: Member = Depends(require_admin),
+):
+    await asyncio.to_thread(service.deactivate_member, username, admin.username)
+    return MessageResponse(detail=f"Member '{username}' has been deactivated")
+
+
+@router.post("/members/{username}/activate")
+async def activate_member_account(
+    username: str,
+    admin: Member = Depends(require_admin),
+):
+    await asyncio.to_thread(service.activate_member_account, username, admin.username)
+    return MessageResponse(detail=f"Member '{username}' has been activated")
+
+
+@router.patch("/members/{username}/role")
+async def update_member_role(
+    username: str,
+    role: str = Query(description="New role: 'member' or 'admin'"),
+    admin: Member = Depends(require_admin),
+):
+    member = await asyncio.to_thread(service.update_member_role, username, role, admin.username)
+    return MemberOut.model_validate(member)

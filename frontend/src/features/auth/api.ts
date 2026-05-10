@@ -30,6 +30,7 @@ export interface ActivateRequest {
 export interface CreateMemberRequest {
   name: string;
   username: string;
+  role?: string;
 }
 
 export interface CreateMemberResponse {
@@ -52,6 +53,11 @@ export interface MembersExistResponse {
   exists: boolean;
 }
 
+export interface TokenResponse {
+  token: string;
+  username: string;
+}
+
 export const authApi = {
   login: (data: LoginRequest) => api.post<LoginResponse>("/auth/login", data),
   activate: (data: ActivateRequest) =>
@@ -64,4 +70,12 @@ export const authApi = {
     api.post<SeedFirstAdminResponse>("/auth/seed", data),
   checkMembersExist: () =>
     api.get<MembersExistResponse>("/auth/members?check_empty=true"),
+  regenerateToken: (username: string) =>
+    api.post<TokenResponse>(`/auth/tokens?username=${encodeURIComponent(username)}`),
+  deactivateMember: (username: string) =>
+    api.post<{ detail: string }>(`/auth/members/${encodeURIComponent(username)}/deactivate`),
+  activateMemberAccount: (username: string) =>
+    api.post<{ detail: string }>(`/auth/members/${encodeURIComponent(username)}/activate`),
+  updateMemberRole: (username: string, role: string) =>
+    api.patch<MemberResponse>(`/auth/members/${encodeURIComponent(username)}/role?role=${encodeURIComponent(role)}`),
 };

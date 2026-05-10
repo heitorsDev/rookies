@@ -9,6 +9,7 @@ export function AddMemberForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [role, setRole] = useState("member");
   const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -21,10 +22,11 @@ export function AddMemberForm() {
     setToken(null);
 
     try {
-      const result = await createMember.mutateAsync({ name, username });
+      const result = await createMember.mutateAsync({ name, username, role });
       setToken(result.token);
       setName("");
       setUsername("");
+      setRole("member");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create member");
     }
@@ -42,6 +44,7 @@ export function AddMemberForm() {
     setIsOpen(false);
     setName("");
     setUsername("");
+    setRole("member");
     setToken(null);
     setError(null);
   };
@@ -137,6 +140,18 @@ export function AddMemberForm() {
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-foreground">Role</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="member">Member</option>
+                  <option value="admin">Admin</option>
+                </select>
               </div>
 
               <Button

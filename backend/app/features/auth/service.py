@@ -198,3 +198,56 @@ def seed_first_admin(name: str, username: str) -> tuple[Member, str]:
 
     raw_token = generate_token(member)
     return member, raw_token
+
+
+def deactivate_member(username: str, admin_username: str) -> Member:
+    member = Member.objects(username=username).first()
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Member '{username}' not found",
+        )
+    if member.username == admin_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot deactivate your own account",
+        )
+    member.is_active = False
+    member.save()
+    return member
+
+
+def activate_member_account(username: str, admin_username: str) -> Member:
+    member = Member.objects(username=username).first()
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Member '{username}' not found",
+        )
+    member.is_active = True
+    member.save()
+    return member
+
+
+def update_member_role(username: str, role: str, admin_username: str) -> Member:
+    if role not in ("member", "admin"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Role must be 'member' or 'admin'",
+        )
+    member = Member.objects(username=username).first()
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Member '{username}' not found",
+        )
+    if username == admin_username and role != "admin":
+        admin_count = Member.objects(role="admin", is_active=True).count()
+        if admin_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot demote yourself: you are the only admin",
+            )
+    member.role = role
+    member.save()
+    return member
