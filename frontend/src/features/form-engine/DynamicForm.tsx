@@ -30,15 +30,17 @@ function buildSchema(fields: FieldDefinition[]) {
     let schema: z.ZodTypeAny
 
     switch (field.field_type) {
-      case "number":
-        schema = z.coerce.number()
+      case "number": {
+        let numberSchema: z.ZodNumber = z.coerce.number()
         if (field.min_value !== undefined) {
-          schema = schema.min(field.min_value, `Minimum value is ${field.min_value}`)
+          numberSchema = numberSchema.min(field.min_value, { message: `Minimum value is ${field.min_value}` })
         }
         if (field.max_value !== undefined) {
-          schema = schema.max(field.max_value, `Maximum value is ${field.max_value}`)
+          numberSchema = numberSchema.max(field.max_value, { message: `Maximum value is ${field.max_value}` })
         }
+        schema = numberSchema
         break
+      }
 
       case "boolean":
         schema = z.boolean()
@@ -52,15 +54,17 @@ function buildSchema(fields: FieldDefinition[]) {
         schema = z.array(z.string())
         break
 
-      case "range":
-        schema = z.number()
+      case "range": {
+        let rangeSchema: z.ZodNumber = z.number()
         if (field.min_value !== undefined) {
-          schema = schema.min(field.min_value)
+          rangeSchema = rangeSchema.min(field.min_value)
         }
         if (field.max_value !== undefined) {
-          schema = schema.max(field.max_value)
+          rangeSchema = rangeSchema.max(field.max_value)
         }
+        schema = rangeSchema
         break
+      }
 
       case "date":
         schema = z.string()
@@ -76,9 +80,9 @@ function buildSchema(fields: FieldDefinition[]) {
 
     if (field.required) {
       if (field.field_type === "multiselect") {
-        schema = schema.min(1, "At least one option is required")
+        schema = (schema as z.ZodArray<z.ZodString>).min(1, { message: "At least one option is required" })
       } else {
-        schema = schema.min(1, `${field.label} is required`)
+        schema = (schema as z.ZodString).min(1, { message: `${field.label} is required` })
       }
     } else {
       schema = schema.optional()
@@ -147,7 +151,7 @@ export function DynamicForm({
                   id={field.field_id}
                   {...register(field.field_id)}
                   placeholder={field.placeholder}
-                  auto={field.auto}
+                  readOnly={field.auto}
                 />
                 {field.auto && field.auto_hint && (
                   <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">

@@ -637,10 +637,29 @@ Provides the team overview of all components.
 
 ### Key Frontend Features
 
+- **Sidebar Navigation**: Fixed left sidebar with navigation links to all main sections:
+  - `/inventory` - Component inventory list
+  - `/register` - Register new components
+  - `/types` - Manage component types
+  - `/members` - Team member management (admin only)
+  - User profile display with logout button
+  - Role-based visibility (admin items shown only to admins)
 - **Inventory page**: Card or table view, filter bar (status chips, type dropdown, search input), pagination, click to open detail.
 - **Component detail page**: Displays all diagnostic data fields with their labels and units, current status with a change dropdown, notes, history timeline, and attachment viewer.
 - **Dynamic form**: Rendered by the `DynamicForm` component based on the schema fetched from the selected component type. See [Section 9](#9-dynamic-form-engine).
 - **Schema builder** (`/types/new`, `/types/[slug]/edit`): A drag-and-drop field editor allowing the team to add, reorder, and configure field definitions visually without writing code.
+
+### Sidebar Implementation
+
+The sidebar is implemented in `frontend/src/features/layout/Sidebar.tsx` and integrated into `frontend/src/app/(app)/layout.tsx`. It uses CSS custom properties defined in `frontend/src/app/globals.css` with the following theme tokens:
+
+| CSS Variable | Light Mode | Dark Mode |
+|---|---|---|
+| `--sidebar` | `#201658` | `#16113e` |
+| `--sidebar-foreground` | `#f9e8c9` | `#f9e8c9` |
+| `--sidebar-accent` | `#2a1f6b` | `#2a1f6b` |
+| `--sidebar-accent-foreground` | `#98abee` | `#98abee` |
+| `--sidebar-ring` | `#98abee` | `#98abee` |
 
 ---
 
