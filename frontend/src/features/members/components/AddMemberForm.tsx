@@ -22,7 +22,7 @@ export function AddMemberForm() {
 
     try {
       const result = await createMember.mutateAsync({ name, username });
-      setToken(result.activation_token);
+      setToken(result.token);
       setName("");
       setUsername("");
     } catch (err) {
@@ -76,10 +76,15 @@ export function AddMemberForm() {
                   <CheckCircle className="h-4 w-4" />
                   <span className="text-sm font-medium">Member Created!</span>
                 </div>
-                <p className="text-xs text-green-600 dark:text-green-500 mb-3">
-                  Share this one-time activation token with the member. They&apos;ll use it to set their password.
-                </p>
-                <div className="flex items-center gap-2">
+                <div className="space-y-2">
+                  <p className="text-xs text-green-600 dark:text-green-500">
+                    <strong>What is this token?</strong> This is a one-time activation code. Share it with the new member so they can set their own password. They must visit the <code className="font-mono bg-green-100 dark:bg-green-900/50 px-1 rounded">/activate</code> page and enter this token along with their username.
+                  </p>
+                  <p className="text-xs text-green-600 dark:text-green-500">
+                    <strong>Important:</strong> This token can only be used once. If it's lost, you can generate a new one from the member list.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 mt-3">
                   <code className="flex-1 rounded bg-white dark:bg-black px-3 py-2 text-xs font-mono text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800 break-all">
                     {token}
                   </code>

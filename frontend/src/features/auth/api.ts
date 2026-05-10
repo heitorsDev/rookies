@@ -34,7 +34,7 @@ export interface CreateMemberRequest {
 
 export interface CreateMemberResponse {
   username: string;
-  activation_token: string;
+  token: string;
 }
 
 export const authApi = {
