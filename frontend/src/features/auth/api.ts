@@ -52,8 +52,6 @@ export interface MembersExistResponse {
   exists: boolean;
 }
 
-const SEED_KEY = process.env.NEXT_PUBLIC_SEED_KEY ?? "";
-
 export const authApi = {
   login: (data: LoginRequest) => api.post<LoginResponse>("/auth/login", data),
   activate: (data: ActivateRequest) =>
@@ -63,7 +61,7 @@ export const authApi = {
   listMembers: () => api.get<MemberResponse[]>("/auth/members"),
   getCurrentMember: () => api.get<MemberResponse>("/auth/members/me"),
   seedFirstAdmin: (data: SeedFirstAdminRequest) =>
-    api.post<SeedFirstAdminResponse>(`/auth/seed?seed_key=${SEED_KEY}`, data),
+    api.post<SeedFirstAdminResponse>("/auth/seed", data),
   checkMembersExist: () =>
     api.get<MembersExistResponse>("/auth/members?check_empty=true"),
 };

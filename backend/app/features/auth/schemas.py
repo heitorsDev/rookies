@@ -42,6 +42,7 @@ class SeedFirstAdminRequest(BaseModel):
     name: str
     username: str
     password: str
+    seed_key: str
 
 
 class SeedResponse(BaseModel):

@@ -43,16 +43,13 @@ async def login(body: LoginRequest):
 
 
 @router.post("/seed", response_model=SeedResponse)
-async def seed_first_admin(
-    body: SeedFirstAdminRequest,
-    seed_key: str = Query(description="The seed key from env"),
-):
+async def seed_first_admin(body: SeedFirstAdminRequest):
     if not settings.seed_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Seed endpoint is not configured",
         )
-    if seed_key != settings.seed_key:
+    if body.seed_key != settings.seed_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid seed key",

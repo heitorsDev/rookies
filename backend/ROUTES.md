@@ -6,6 +6,21 @@
 
 ---
 
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [python-fastapi skill](../.opencode/skills/python-fastapi/SKILL.md) | FastAPI development conventions and patterns |
+| [mongodb-odm skill](../.opencode/skills/mongodb-odm/SKILL.md) | MongoEngine ODM patterns and conventions |
+| [mongodb skill](../.agents/skills/mongodb/SKILL.md) | General MongoDB best practices |
+
+---
+
+## Getting Started
+
+---
+
 ## Authentication
 
 All endpoints except `/auth/login`, `/auth/activate`, `/auth/seed`, and `/health` require a valid JWT bearer token in the `Authorization` header:

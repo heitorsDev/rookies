@@ -26,6 +26,7 @@ const setupSchema = z
       .string()
       .min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string().min(1, "Please confirm your password"),
+    seed_key: z.string().min(1, "Seed key is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -56,6 +57,7 @@ export function SetupForm() {
         name: data.name,
         username: data.username,
         password: data.password,
+        seed_key: data.seed_key,
       });
       toast.success("Admin account created! You can now sign in.");
       router.push("/login?setup_success=true");
@@ -121,6 +123,34 @@ export function SetupForm() {
         </div>
         {errors.username && (
           <p className="text-xs text-destructive">{errors.username.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        <label
+          htmlFor={`${fieldId}-seed-key`}
+          className="text-sm font-medium text-foreground/90"
+        >
+          Seed Key
+        </label>
+        <div className="relative">
+          <input
+            id={`${fieldId}-seed-key`}
+            type="password"
+            autoComplete="off"
+            placeholder="Enter the seed key"
+            {...register("seed_key")}
+            className={cn(
+              "block h-10 w-full rounded-xl border bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/50 transition-all duration-200",
+              "focus:outline-none focus:ring-2 focus:ring-ring/40 focus:border-ring",
+              errors.seed_key
+                ? "border-destructive ring-1 ring-destructive/30"
+                : "border-border hover:border-foreground/20"
+            )}
+          />
+        </div>
+        {errors.seed_key && (
+          <p className="text-xs text-destructive">{errors.seed_key.message}</p>
         )}
       </div>
 
