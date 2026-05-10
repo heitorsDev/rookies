@@ -431,6 +431,8 @@ Provides the team overview of all components.
 
 ## 7. API Contract
 
+> **Note**: For the most up-to-date and detailed API specifications (including request/response schemas, query parameters, and validation rules), always refer to `backend/ROUTES.md`.
+
 ### Base URL
 ```
 /api/v1

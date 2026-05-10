@@ -187,6 +187,27 @@ List all registered member accounts.
 
 ---
 
+#### `GET /auth/members/me`
+
+Get the current authenticated member's profile.
+
+**Auth:** Any authenticated member
+
+**Response `200`:**
+```json
+{
+  "name": "João Silva",
+  "username": "joaosilva",
+  "role": "member",
+  "is_active": true,
+  "is_activated": true,
+  "created_at": "2025-03-10T14:30:00Z",
+  "created_by": "admin_user"
+}
+```
+
+---
+
 ### Component Types — `prefix: /component-types`
 
 | Method | Path | Auth | Description |
@@ -582,5 +603,6 @@ All errors follow a consistent format:
 |--------|--------|---------|---------|--------|
 | Auth | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
 | Component Types | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
-| Components | ⚠️ Skeleton | ✅ Complete | ❌ Empty | ✅ Complete |
-| Inventory | ⚠️ Skeleton | ✅ Complete | ❌ Empty | N/A (uses Component) |
+| Components | ✅ Complete | ✅ Complete | ✅ Complete | ✅ Complete |
+| Inventory | ✅ Complete | ✅ Complete | ✅ Complete | N/A (uses Component) |
+| Health | ✅ Complete | N/A | N/A | N/A |
