@@ -31,31 +31,6 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  };
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-  });
-
-  return handleResponse<T>(res);
-}
-  const data = await res.json();
-  console.log("API Response:", res.status, data);
-  return data as T;
-}
-
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("access_token");
@@ -82,10 +57,7 @@ async function request<T>(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const url = `${API_URL}${path}`;
-  console.log("Request:", options.method ?? "GET", url, "Body:", options.body);
-
-  const res = await fetch(url, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
   });
