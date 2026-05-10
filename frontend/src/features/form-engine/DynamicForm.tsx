@@ -24,23 +24,45 @@ interface DynamicFormProps {
 }
 
 function buildSchema(fields: FieldDefinition[]) {
-  const shape: Record<string, z.ZodTypeAny> = {}
+  try {
+    const shape: Record<string, z.ZodTypeAny> = {}
 
-  for (const field of fields) {
-    let schema: z.ZodTypeAny
+    if (!Array.isArray(fields)) {
+      console.error("fields is not an array:", fields)
+      return z.object({})
+    }
 
-    switch (field.field_type) {
-      case "number": {
-        let numberSchema: z.ZodNumber = z.coerce.number()
-        if (field.min_value !== undefined) {
-          numberSchema = numberSchema.min(field.min_value, { message: `Minimum value is ${field.min_value}` })
-        }
-        if (field.max_value !== undefined) {
-          numberSchema = numberSchema.max(field.max_value, { message: `Maximum value is ${field.max_value}` })
-        }
-        schema = numberSchema
-        break
+    if (fields.length === 0) {
+      return z.object({})
+    }
+
+    for (const field of fields) {
+      console.log("Processing field:", field.field_id, field.field_type, field.required)
+      if (!field || typeof field.field_id !== "string") {
+        console.error("Invalid field:", field)
+        continue
       }
+
+      let schema: z.ZodTypeAny = z.string()
+      const fieldType = field.field_type || "text"
+
+      console.log("fieldType:", fieldType)
+
+      switch (fieldType) {
+        case "number": {
+          let numberSchema: z.ZodNumber = z.coerce.number()
+          const minVal = field.min_value !== undefined ? Number(field.min_value) : undefined
+          const maxVal = field.max_value !== undefined ? Number(field.max_value) : undefined
+          console.log("minVal:", minVal, "maxVal:", maxVal)
+          if (minVal !== undefined && !isNaN(minVal)) {
+            numberSchema = numberSchema.min(minVal, { error: `Minimum value is ${minVal}` })
+          }
+          if (maxVal !== undefined && !isNaN(maxVal)) {
+            numberSchema = numberSchema.max(maxVal, { error: `Maximum value is ${maxVal}` })
+          }
+          schema = numberSchema
+          break
+        }
 
       case "boolean":
         schema = z.boolean()
@@ -56,11 +78,13 @@ function buildSchema(fields: FieldDefinition[]) {
 
       case "range": {
         let rangeSchema: z.ZodNumber = z.number()
-        if (field.min_value !== undefined) {
-          rangeSchema = rangeSchema.min(field.min_value)
+        const minVal = field.min_value !== undefined ? Number(field.min_value) : undefined
+        const maxVal = field.max_value !== undefined ? Number(field.max_value) : undefined
+        if (minVal !== undefined && !isNaN(minVal)) {
+          rangeSchema = rangeSchema.min(minVal)
         }
-        if (field.max_value !== undefined) {
-          rangeSchema = rangeSchema.max(field.max_value)
+        if (maxVal !== undefined && !isNaN(maxVal)) {
+          rangeSchema = rangeSchema.max(maxVal)
         }
         schema = rangeSchema
         break
@@ -79,10 +103,12 @@ function buildSchema(fields: FieldDefinition[]) {
     }
 
     if (field.required) {
-      if (field.field_type === "multiselect") {
-        schema = (schema as z.ZodArray<z.ZodString>).min(1, { message: "At least one option is required" })
+      if (fieldType === "multiselect") {
+        schema = (schema as z.ZodArray<z.ZodString>).min(1, { error: "At least one option is required" })
+      } else if (fieldType === "boolean") {
+        schema = schema.refine((val) => val === true, { error: `${field.label} is required` })
       } else {
-        schema = (schema as z.ZodString).min(1, { message: `${field.label} is required` })
+        schema = schema.min(1, { error: `${field.label} is required` })
       }
     } else {
       schema = schema.optional()
@@ -91,7 +117,11 @@ function buildSchema(fields: FieldDefinition[]) {
     shape[field.field_id] = schema
   }
 
-  return z.object(shape)
+    return z.object(shape)
+  } catch (error) {
+    console.error("Error building schema:", error)
+    return z.object({})
+  }
 }
 
 export function DynamicForm({
