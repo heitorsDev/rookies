@@ -1,7 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { GripVertical, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { Plus, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FieldDefinition, CreateComponentTypeRequest } from "../api";
 
@@ -48,14 +66,356 @@ function generateFieldId(label: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
+interface SortableFieldCardProps {
+  field: FieldDefinition;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onUpdate: (updates: Partial<FieldDefinition>) => void;
+  onRemove: () => void;
+}
+
+function SortableFieldCard({
+  field,
+  index,
+  isExpanded,
+  onToggle,
+  onUpdate,
+  onRemove,
+}: SortableFieldCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: index.toString() });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="rounded-xl border bg-card transition-all"
+    >
+      <div
+        className="flex items-center gap-3 p-4 cursor-pointer hover:bg-accent/5"
+        onClick={onToggle}
+      >
+        <button
+          type="button"
+          className="cursor-grab text-muted-foreground hover:text-foreground p-1 rounded hover:bg-accent"
+          {...attributes}
+          {...listeners}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            className="h-4 w-4"
+          >
+            <circle cx="5" cy="3" r="1.5" />
+            <circle cx="11" cy="3" r="1.5" />
+            <circle cx="5" cy="8" r="1.5" />
+            <circle cx="11" cy="8" r="1.5" />
+            <circle cx="5" cy="13" r="1.5" />
+            <circle cx="11" cy="13" r="1.5" />
+          </svg>
+        </button>
+        <div className="flex-1 min-w-0">
+          <p className="font-medium truncate">
+            {field.label || (
+              <span className="text-muted-foreground italic">
+                Unnamed field
+              </span>
+            )}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {field.field_id || "no field_id"} &middot;{" "}
+            {FIELD_TYPES.find((t) => t.value === field.field_type)?.label ||
+              field.field_type}
+            {field.required && (
+              <span className="text-primary ml-1">&bull; Required</span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="currentColor"
+            className={`h-4 w-4 text-muted-foreground transition-transform ${
+              isExpanded ? "rotate-180" : ""
+            }`}
+          >
+            <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+          </svg>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t p-4 space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Label
+              </label>
+              <input
+                type="text"
+                value={field.label}
+                onChange={(e) => {
+                  const label = e.target.value;
+                  onUpdate({ label });
+                  if (!field.field_id || field.field_id === generateFieldId(field.label)) {
+                    onUpdate({ field_id: generateFieldId(label) });
+                  }
+                }}
+                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="Field display label"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Field ID
+              </label>
+              <input
+                type="text"
+                value={field.field_id}
+                onChange={(e) => onUpdate({ field_id: e.target.value })}
+                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="field_id"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Field Type
+              </label>
+              <select
+                value={field.field_type}
+                onChange={(e) => onUpdate({ field_type: e.target.value })}
+                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                {FIELD_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-3 pt-6">
+              <button
+                type="button"
+                onClick={() => onUpdate({ required: !field.required })}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all ${
+                  field.required
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background border-input hover:border-primary"
+                }`}
+              >
+                <span
+                  className={`h-4 w-4 rounded flex items-center justify-center transition-colors ${
+                    field.required ? "bg-white/20" : "border border-muted-foreground"
+                  }`}
+                >
+                  {field.required && <Check className="h-3 w-3" />}
+                </span>
+                Required
+              </button>
+            </div>
+          </div>
+
+          {(field.field_type === "select" ||
+            field.field_type === "multiselect") && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Options
+              </label>
+              <textarea
+                value={field.options?.join("\n") ?? ""}
+                onChange={(e) =>
+                  onUpdate({
+                    options: e.target.value.split("\n").filter((o) => o.trim()),
+                  })
+                }
+                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="Option 1&#10;Option 2&#10;Option 3"
+                rows={4}
+              />
+            </div>
+          )}
+
+          {field.field_type === "number" && (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Min Value
+                </label>
+                <input
+                  type="number"
+                  value={field.min_value ?? ""}
+                  onChange={(e) =>
+                    onUpdate({
+                      min_value: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Max Value
+                </label>
+                <input
+                  type="number"
+                  value={field.max_value ?? ""}
+                  onChange={(e) =>
+                    onUpdate({
+                      max_value: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="100"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Unit
+                </label>
+                <input
+                  type="text"
+                  value={field.unit ?? ""}
+                  onChange={(e) => onUpdate({ unit: e.target.value })}
+                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="e.g., RPM, A"
+                />
+              </div>
+            </div>
+          )}
+
+          {field.field_type === "range" && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Min Value
+                </label>
+                <input
+                  type="number"
+                  value={field.min_value ?? ""}
+                  onChange={(e) =>
+                    onUpdate({
+                      min_value: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="0"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Max Value
+                </label>
+                <input
+                  type="number"
+                  value={field.max_value ?? ""}
+                  onChange={(e) =>
+                    onUpdate({
+                      max_value: e.target.value
+                        ? Number(e.target.value)
+                        : undefined,
+                    })
+                  }
+                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  placeholder="100"
+                />
+              </div>
+            </div>
+          )}
+
+          {field.field_type === "auto" && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Auto Hint
+              </label>
+              <input
+                type="text"
+                value={field.auto_hint ?? ""}
+                onChange={(e) => onUpdate({ auto_hint: e.target.value })}
+                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="e.g., Paste the firmware version from Phoenix Tuner X"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Help Text
+            </label>
+            <input
+              type="text"
+              value={field.help_text ?? ""}
+              onChange={(e) => onUpdate({ help_text: e.target.value })}
+              className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="Optional helper text shown below the field"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Placeholder
+            </label>
+            <input
+              type="text"
+              value={field.placeholder ?? ""}
+              onChange={(e) => onUpdate({ placeholder: e.target.value })}
+              className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="Optional placeholder text"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function SchemaBuilder({
   initialData,
   onSubmit,
   isSubmitting = false,
 }: SchemaBuilderProps) {
+  const router = useRouter();
   const [name, setName] = useState(initialData?.name ?? "");
   const [slug, setSlug] = useState(initialData?.slug ?? "");
-  const [description, setDescription] = useState(initialData?.description ?? "");
+  const [description, setDescription] = useState(
+    initialData?.description ?? ""
+  );
   const [fields, setFields] = useState<FieldDefinition[]>(
     initialData?.fields ?? []
   );
@@ -63,20 +423,18 @@ export function SchemaBuilder({
     initialData?.fields && initialData.fields.length > 0 ? 0 : null
   );
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const handleNameChange = (newName: string) => {
     setName(newName);
     if (!initialData?.slug) {
       setSlug(generateFieldId(newName));
     }
-  };
-
-  const handleFieldLabelChange = (index: number, label: string) => {
-    const newFields = [...fields];
-    newFields[index] = { ...newFields[index], label };
-    if (!newFields[index].field_id || newFields[index].field_id === generateFieldId(newFields[index].label)) {
-      newFields[index].field_id = generateFieldId(label);
-    }
-    setFields(newFields);
   };
 
   const addField = () => {
@@ -100,13 +458,14 @@ export function SchemaBuilder({
     setFields(newFields);
   };
 
-  const moveField = (fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= fields.length) return;
-    const newFields = [...fields];
-    const [removed] = newFields.splice(fromIndex, 1);
-    newFields.splice(toIndex, 0, removed);
-    setFields(newFields);
-    setExpandedField(toIndex);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = parseInt(active.id as string);
+      const newIndex = parseInt(over.id as string);
+      setFields(arrayMove(fields, oldIndex, newIndex));
+      setExpandedField(newIndex);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -121,42 +480,57 @@ export function SchemaBuilder({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="space-y-4 rounded-lg border bg-card p-6">
-            <h2 className="text-lg font-semibold">Basic Information</h2>
-            <div className="space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="lg:col-span-3 space-y-6">
+          <div className="rounded-xl border bg-card p-6">
+            <h2 className="text-lg font-semibold mb-5">Basic Information</h2>
+            <div className="space-y-5">
               <div>
-                <label className="text-sm font-medium">Name</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Name
+                </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="e.g., Falcon 500 Motor"
                   required
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Slug</label>
-                <input
-                  type="text"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="e.g., falcon500"
-                  required
-                />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  URL-friendly identifier (lowercase, letters, numbers, hyphens)
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Slug
+                </label>
+                <div className="mt-1.5 flex rounded-lg border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+                  <span className="px-3 py-2.5 text-sm text-muted-foreground bg-muted/50 border-r border-input flex items-center">
+                    /
+                  </span>
+                  <input
+                    type="text"
+                    value={slug}
+                    onChange={(e) =>
+                      setSlug(
+                        e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                      )
+                    }
+                    className="flex-1 px-3 py-2.5 text-sm font-mono bg-transparent focus:outline-none"
+                    placeholder="falcon500"
+                    required
+                  />
+                </div>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  URL-friendly identifier
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium">Description</label>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  Description
+                </label>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                   placeholder="Describe this component type..."
                   rows={3}
                 />
@@ -167,293 +541,85 @@ export function SchemaBuilder({
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Form Fields</h2>
-              <Button type="button" variant="outline" size="sm" onClick={addField}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addField}
+                className="gap-2"
+              >
                 <Plus className="h-4 w-4" />
                 Add Field
               </Button>
             </div>
 
             {fields.length === 0 ? (
-              <div className="rounded-lg border-2 border-dashed p-8 text-center">
-                <p className="text-sm text-muted-foreground">
-                  No fields added yet. Click &quot;Add Field&quot; to create your first form field.
+              <div className="rounded-xl border-2 border-dashed p-12 text-center">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Plus className="h-6 w-6 text-primary" />
+                </div>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+                  No fields yet. Click &quot;Add Field&quot; to create your first
+                  form field.
                 </p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {fields.map((field, index) => (
-                  <div
-                    key={index}
-                    className="rounded-lg border bg-card transition-colors"
-                  >
-                    <div
-                      className="flex items-center gap-3 p-4 cursor-pointer"
-                      onClick={() => setExpandedField(expandedField === index ? null : index)}
-                    >
-                      <button
-                        type="button"
-                        className="cursor-grab text-muted-foreground hover:text-foreground"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <GripVertical className="h-5 w-5" />
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {field.label || <span className="text-muted-foreground">Unnamed field</span>}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {field.field_id || "no field_id"} • {FIELD_TYPES.find(t => t.value === field.field_type)?.label || field.field_type}
-                          {field.required && " • Required"}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          className="p-1 text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveField(index, index - 1);
-                          }}
-                          disabled={index === 0}
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="p-1 text-muted-foreground hover:text-foreground"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            moveField(index, index + 1);
-                          }}
-                          disabled={index === fields.length - 1}
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          className="p-1 text-destructive hover:text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeField(index);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {expandedField === index && (
-                      <div className="border-t p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Label</label>
-                            <input
-                              type="text"
-                              value={field.label}
-                              onChange={(e) => handleFieldLabelChange(index, e.target.value)}
-                              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              placeholder="Field display label"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-sm font-medium">Field ID</label>
-                            <input
-                              type="text"
-                              value={field.field_id}
-                              onChange={(e) => updateField(index, { field_id: e.target.value })}
-                              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              placeholder="field_id"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <label className="text-sm font-medium">Field Type</label>
-                            <select
-                              value={field.field_type}
-                              onChange={(e) => updateField(index, { field_type: e.target.value })}
-                              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            >
-                              {FIELD_TYPES.map((type) => (
-                                <option key={type.value} value={type.value}>
-                                  {type.label}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="flex items-center gap-2 pt-6">
-                            <input
-                              type="checkbox"
-                              id={`required-${index}`}
-                              checked={field.required}
-                              onChange={(e) => updateField(index, { required: e.target.checked })}
-                              className="rounded border-input"
-                            />
-                            <label htmlFor={`required-${index}`} className="text-sm">
-                              Required field
-                            </label>
-                          </div>
-                        </div>
-
-                        {(field.field_type === "select" || field.field_type === "multiselect") && (
-                          <div>
-                            <label className="text-sm font-medium">Options (one per line)</label>
-                            <textarea
-                              value={field.options?.join("\n") ?? ""}
-                              onChange={(e) =>
-                                updateField(index, {
-                                  options: e.target.value.split("\n").filter((o) => o.trim()),
-                                })
-                              }
-                              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              placeholder="Option 1&#10;Option 2&#10;Option 3"
-                              rows={4}
-                            />
-                          </div>
-                        )}
-
-                        {field.field_type === "number" && (
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <label className="text-sm font-medium">Min Value</label>
-                              <input
-                                type="number"
-                                value={field.min_value ?? ""}
-                                onChange={(e) =>
-                                  updateField(index, {
-                                    min_value: e.target.value ? Number(e.target.value) : undefined,
-                                  })
-                                }
-                                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Max Value</label>
-                              <input
-                                type="number"
-                                value={field.max_value ?? ""}
-                                onChange={(e) =>
-                                  updateField(index, {
-                                    max_value: e.target.value ? Number(e.target.value) : undefined,
-                                  })
-                                }
-                                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                placeholder="100"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Unit</label>
-                              <input
-                                type="text"
-                                value={field.unit ?? ""}
-                                onChange={(e) => updateField(index, { unit: e.target.value })}
-                                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                placeholder="e.g., RPM, A"
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {field.field_type === "range" && (
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-sm font-medium">Min Value</label>
-                              <input
-                                type="number"
-                                value={field.min_value ?? ""}
-                                onChange={(e) =>
-                                  updateField(index, {
-                                    min_value: e.target.value ? Number(e.target.value) : undefined,
-                                  })
-                                }
-                                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                placeholder="0"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium">Max Value</label>
-                              <input
-                                type="number"
-                                value={field.max_value ?? ""}
-                                onChange={(e) =>
-                                  updateField(index, {
-                                    max_value: e.target.value ? Number(e.target.value) : undefined,
-                                  })
-                                }
-                                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                placeholder="100"
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {field.field_type === "auto" && (
-                          <div>
-                            <label className="text-sm font-medium">Auto Hint</label>
-                            <input
-                              type="text"
-                              value={field.auto_hint ?? ""}
-                              onChange={(e) => updateField(index, { auto_hint: e.target.value })}
-                              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                              placeholder="e.g., Paste the firmware version from Phoenix Tuner X"
-                            />
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              Instruction shown to users about what to paste/copy
-                            </p>
-                          </div>
-                        )}
-
-                        <div>
-                          <label className="text-sm font-medium">Help Text</label>
-                          <input
-                            type="text"
-                            value={field.help_text ?? ""}
-                            onChange={(e) => updateField(index, { help_text: e.target.value })}
-                            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            placeholder="Optional helper text shown below the field"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-sm font-medium">Placeholder</label>
-                          <input
-                            type="text"
-                            value={field.placeholder ?? ""}
-                            onChange={(e) => updateField(index, { placeholder: e.target.value })}
-                            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                            placeholder="Optional placeholder text"
-                          />
-                        </div>
-                      </div>
-                    )}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={fields.map((_, i) => i.toString())}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {fields.map((field, index) => (
+                      <SortableFieldCard
+                        key={index}
+                        field={field}
+                        index={index}
+                        isExpanded={expandedField === index}
+                        onToggle={() =>
+                          setExpandedField(expandedField === index ? null : index)
+                        }
+                        onUpdate={(updates) => updateField(index, updates)}
+                        onRemove={() => removeField(index)}
+                      />
+                    ))}
                   </div>
-                ))}
-              </div>
+                </SortableContext>
+              </DndContext>
             )}
           </div>
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-lg border bg-card p-6 sticky top-6">
-            <h2 className="text-lg font-semibold mb-4">Live Preview</h2>
-            <div className="space-y-4">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="rounded-xl border bg-card p-6 sticky top-6">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <h2 className="text-lg font-semibold">Live Preview</h2>
+            </div>
+            <div className="space-y-5">
               {fields.filter((f) => f.label).length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Add fields to see a live preview of your form.
-                </p>
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">
+                    Add fields to see a preview
+                  </p>
+                </div>
               ) : (
                 fields
                   .filter((f) => f.label)
                   .map((field, index) => (
-                    <div key={index}>
-                      <label className="text-sm font-medium">
+                    <div key={index} className="space-y-2">
+                      <label className="text-sm font-medium flex items-center gap-1">
                         {field.label}
-                        {field.required && <span className="text-destructive ml-1">*</span>}
+                        {field.required && (
+                          <span className="text-destructive ml-0.5">*</span>
+                        )}
                       </label>
                       {field.field_type === "select" && (
-                        <select className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        <select className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm">
                           <option value="">Select...</option>
                           {field.options?.map((opt, i) => (
                             <option key={i} value={opt}>
@@ -463,30 +629,46 @@ export function SchemaBuilder({
                         </select>
                       )}
                       {field.field_type === "multiselect" && (
-                        <div className="mt-1 space-y-1">
+                        <div className="space-y-1.5">
                           {field.options?.map((opt, i) => (
-                            <label key={i} className="flex items-center gap-2 text-sm">
-                              <input type="checkbox" className="rounded border-input" />
+                            <label
+                              key={i}
+                              className="flex items-center gap-2.5 text-sm p-2 rounded-lg border border-input hover:bg-accent/50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                className="rounded border-primary text-primary focus:ring-primary/20"
+                              />
                               {opt}
                             </label>
                           ))}
                         </div>
                       )}
                       {field.field_type === "boolean" && (
-                        <input type="checkbox" className="mt-2 rounded border-input" />
+                        <button
+                          type="button"
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-left flex items-center justify-between"
+                        >
+                          <span className="text-muted-foreground">
+                            Toggle on/off
+                          </span>
+                          <div className="w-10 h-6 rounded-full bg-muted relative">
+                            <div className="absolute right-1 top-1 w-4 h-4 rounded-full bg-white shadow" />
+                          </div>
+                        </button>
                       )}
                       {field.field_type === "textarea" && (
                         <textarea
-                          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm resize-none"
                           rows={3}
                           placeholder={field.placeholder}
                         />
                       )}
                       {field.field_type === "range" && (
-                        <div className="mt-2">
+                        <div className="space-y-2">
                           <input
                             type="range"
-                            className="w-full"
+                            className="w-full accent-primary"
                             min={field.min_value ?? 0}
                             max={field.max_value ?? 100}
                           />
@@ -497,35 +679,49 @@ export function SchemaBuilder({
                         </div>
                       )}
                       {field.field_type === "auto" && (
-                        <div>
+                        <div className="space-y-1.5">
                           <input
                             type="text"
-                            className="mt-1 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm"
-                            value="Read-only (paste from vendor tool)"
+                            className="w-full rounded-lg border border-input bg-muted/50 px-3 py-2.5 text-sm"
+                            value="Click to paste from vendor tool"
                             readOnly
                           />
                           {field.auto_hint && (
-                            <p className="mt-1 text-xs text-muted-foreground">{field.auto_hint}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {field.auto_hint}
+                            </p>
                           )}
                         </div>
                       )}
                       {field.field_type === "date" && (
                         <input
                           type="date"
-                          className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"
                         />
                       )}
                       {field.field_type === "file" && (
-                        <input
-                          type="file"
-                          className="mt-1 w-full text-sm text-muted-foreground"
-                        />
+                        <div className="rounded-lg border-2 border-dashed border-input p-4 text-center hover:border-primary/50 transition-colors cursor-pointer">
+                          <p className="text-sm text-muted-foreground">
+                            Click to upload file
+                          </p>
+                        </div>
                       )}
-                      {!["select", "multiselect", "boolean", "textarea", "range", "auto", "date", "file"].includes(field.field_type) && (
+                      {![
+                        "select",
+                        "multiselect",
+                        "boolean",
+                        "textarea",
+                        "range",
+                        "auto",
+                        "date",
+                        "file",
+                      ].includes(field.field_type) && (
                         <div className="relative">
                           <input
-                            type={field.field_type === "number" ? "number" : "text"}
-                            className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm pr-12"
+                            type={
+                              field.field_type === "number" ? "number" : "text"
+                            }
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm pr-12 focus:ring-2 focus:ring-primary/20 focus:border-primary"
                             placeholder={field.placeholder}
                           />
                           {field.unit && (
@@ -536,7 +732,9 @@ export function SchemaBuilder({
                         </div>
                       )}
                       {field.help_text && (
-                        <p className="mt-1 text-xs text-muted-foreground">{field.help_text}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {field.help_text}
+                        </p>
                       )}
                     </div>
                   ))
@@ -545,8 +743,19 @@ export function SchemaBuilder({
           </div>
 
           <div className="flex gap-3">
-            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              className="flex-1"
+              disabled={isSubmitting || !name || !slug}
+            >
               {isSubmitting ? "Saving..." : initialData ? "Update Type" : "Create Type"}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              Cancel
             </Button>
           </div>
         </div>
