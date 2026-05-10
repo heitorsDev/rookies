@@ -48,10 +48,10 @@ export default function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div style={{ minHeight: "100vh", backgroundColor: "#201658" }}>
       <Sidebar />
-      <main className="pl-64 min-h-screen">
-        <div className="p-6">{children}</div>
+      <main style={{ paddingLeft: "256px", minHeight: "100vh" }}>
+        <div style={{ padding: "1.5rem" }}>{children}</div>
       </main>
     </div>
   );

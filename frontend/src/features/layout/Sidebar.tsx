@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/hooks/AuthContext";
 import { Icons } from "./icons";
 
@@ -36,33 +35,74 @@ export function Sidebar() {
   const pathname = usePathname();
   const { member, logout } = useAuth();
 
+  const sidebarStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    width: "256px",
+    height: "100vh",
+    backgroundColor: "#201658",
+    position: "fixed",
+    left: 0,
+    top: 0,
+    borderRight: "1px solid rgba(255,255,255,0.08)",
+    color: "#f9e8c9",
+    zIndex: 50,
+  };
+
+  const activeLinkStyle = {
+    backgroundColor: "#2a1f6b",
+    color: "#98abee",
+  };
+
+  const inactiveLinkStyle = {
+    color: "rgba(249, 232, 201, 0.7)",
+  };
+
+  const hoverLinkStyle = {
+    backgroundColor: "rgba(42, 31, 107, 0.5)",
+    color: "#f9e8c9",
+  };
+
   return (
-    <aside className="flex flex-col w-64 h-screen bg-sidebar fixed left-0 top-0 border-r border-sidebar-border">
-      <div className="p-6">
+    <aside style={sidebarStyle}>
+      <div style={{ padding: "1.5rem" }}>
         <Link
           href="/inventory"
-          className="text-xl font-bold text-sidebar-foreground tracking-tight"
+          style={{
+            fontSize: "1.25rem",
+            fontWeight: 700,
+            color: "#f9e8c9",
+            letterSpacing: "-0.025em",
+          }}
         >
           Rookies
         </Link>
-        <p className="text-xs text-sidebar-foreground/60 mt-1">Component Registry</p>
+        <p style={{ fontSize: "0.75rem", color: "rgba(249,232,201,0.6)", marginTop: "0.25rem" }}>
+          Component Registry
+        </p>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      <nav style={{ flex: 1, padding: "0 0.75rem" }}>
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-              )}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.75rem",
+                padding: "0.625rem 0.75rem",
+                borderRadius: "0.5rem",
+                fontSize: "0.875rem",
+                fontWeight: 500,
+                transition: "all 0.2s",
+                marginBottom: "0.25rem",
+                ...(isActive ? activeLinkStyle : inactiveLinkStyle),
+              }}
             >
-              <item.icon className={cn("w-5 h-5", isActive && "text-sidebar-ring")} />
+              <item.icon style={{ width: "1.25rem", height: "1.25rem", color: isActive ? "#98abee" : "inherit" }} />
               {item.title}
             </Link>
           );
@@ -70,8 +110,8 @@ export function Sidebar() {
 
         {member?.role === "admin" && (
           <>
-            <div className="pt-4 pb-2">
-              <p className="px-3 text-xs font-medium text-sidebar-foreground/40 uppercase tracking-wider">
+            <div style={{ paddingTop: "1rem", paddingBottom: "0.5rem" }}>
+              <p style={{ padding: "0 0.75rem", fontSize: "0.75rem", fontWeight: 500, color: "rgba(249,232,201,0.4)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
                 Admin
               </p>
             </div>
@@ -81,14 +121,20 @@ export function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-                    isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                  )}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.75rem",
+                    padding: "0.625rem 0.75rem",
+                    borderRadius: "0.5rem",
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                    transition: "all 0.2s",
+                    marginBottom: "0.25rem",
+                    ...(isActive ? activeLinkStyle : inactiveLinkStyle),
+                  }}
                 >
-                  <item.icon className={cn("w-5 h-5", isActive && "text-sidebar-ring")} />
+                  <item.icon style={{ width: "1.25rem", height: "1.25rem", color: isActive ? "#98abee" : "inherit" }} />
                   {item.title}
                 </Link>
               );
@@ -97,29 +143,36 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-              <span className="text-sm font-medium text-sidebar-accent-foreground">
+      <div style={{ padding: "1rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <div style={{ width: "2rem", height: "2rem", borderRadius: "9999px", backgroundColor: "#2a1f6b", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ fontSize: "0.875rem", fontWeight: 500, color: "#98abee" }}>
                 {member?.name.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontSize: "0.875rem", fontWeight: 500, color: "#f9e8c9", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {member?.name}
               </p>
-              <p className="text-xs text-sidebar-foreground/50 truncate">
+              <p style={{ fontSize: "0.75rem", color: "rgba(249,232,201,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 @{member?.username}
               </p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="p-2 rounded-lg text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 transition-colors"
+            style={{
+              padding: "0.5rem",
+              borderRadius: "0.5rem",
+              color: "rgba(249,232,201,0.5)",
+              backgroundColor: "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
             title="Log out"
           >
-            <Icons.logout className="w-5 h-5" />
+            <Icons.logout style={{ width: "1.25rem", height: "1.25rem" }} />
           </button>
         </div>
       </div>
