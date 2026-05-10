@@ -652,7 +652,7 @@ Provides the team overview of all components.
 
 ### Sidebar Implementation
 
-The sidebar is implemented in `frontend/src/features/layout/Sidebar.tsx` and integrated into `frontend/src/app/(app)/layout.tsx`. It uses CSS custom properties defined in `frontend/src/app/globals.css` with the following theme tokens:
+The sidebar is implemented in `frontend/src/components/Sidebar.tsx` and integrated into `frontend/src/app/(app)/layout.tsx`. It uses CSS custom properties defined in `frontend/src/app/globals.css` with the following theme tokens:
 
 | CSS Variable | Light Mode | Dark Mode |
 |---|---|---|
