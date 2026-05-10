@@ -22,7 +22,7 @@ export default function MembersPage() {
 
   if (isAuthLoading) {
     return (
-      <div className="flex min-h-screen bg-[#faf7f2]">
+      <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="flex-1 ml-64 p-6 flex items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -33,7 +33,7 @@ export default function MembersPage() {
 
   if (member?.role !== "admin") {
     return (
-      <div className="flex min-h-screen bg-[#faf7f2]">
+      <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="flex-1 ml-64 p-6 flex flex-col items-center justify-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
@@ -51,7 +51,7 @@ export default function MembersPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#faf7f2]">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="space-y-6">

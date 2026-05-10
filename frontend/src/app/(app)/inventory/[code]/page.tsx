@@ -105,7 +105,7 @@ export default function ComponentDetailPage({ params }: Props) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-[#faf7f2]">
+      <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="flex-1 ml-64 p-6 flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -116,7 +116,7 @@ export default function ComponentDetailPage({ params }: Props) {
 
   if (error || !component) {
     return (
-      <div className="flex min-h-screen bg-[#faf7f2]">
+      <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="flex-1 ml-64 p-6">
           <div className="max-w-2xl mx-auto">
@@ -144,7 +144,7 @@ export default function ComponentDetailPage({ params }: Props) {
   )
 
   return (
-    <div className="flex min-h-screen bg-[#faf7f2]">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="max-w-4xl mx-auto space-y-6">

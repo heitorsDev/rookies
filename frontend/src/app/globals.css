@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -50,56 +48,20 @@
 }
 
 :root {
-  --background: #faf7f2;
-  --foreground: #201658;
-  --card: #ffffff;
-  --card-foreground: #201658;
-  --popover: #ffffff;
-  --popover-foreground: #201658;
-  --primary: #1d24ca;
-  --primary-foreground: #ffffff;
-  --secondary: #98abee;
-  --secondary-foreground: #201658;
-  --muted: #ede8df;
-  --muted-foreground: #6b6596;
-  --accent: #98abee;
-  --accent-foreground: #201658;
-  --destructive: #e53e3e;
-  --destructive-foreground: #ffffff;
-  --border: #d4cec0;
-  --input: #d4cec0;
-  --ring: #1d24ca;
-  --chart-1: #1d24ca;
-  --chart-2: #98abee;
-  --chart-3: #201658;
-  --chart-4: #f9e8c9;
-  --chart-5: #6b6596;
-  --radius: 0.5rem;
-  --sidebar: #201658;
-  --sidebar-foreground: #f9e8c9;
-  --sidebar-primary: #1d24ca;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #2a1f6b;
-  --sidebar-accent-foreground: #98abee;
-  --sidebar-border: rgba(255, 255, 255, 0.08);
-  --sidebar-ring: #98abee;
-}
-
-.dark {
   --background: #201658;
   --foreground: #f9e8c9;
-  --card: #261c63;
+  --card: #1d24ca;
   --card-foreground: #f9e8c9;
-  --popover: #261c63;
+  --popover: #1d24ca;
   --popover-foreground: #f9e8c9;
   --primary: #98abee;
   --primary-foreground: #201658;
-  --secondary: #1d24ca;
+  --secondary: #2a1f6b;
   --secondary-foreground: #f9e8c9;
   --muted: #2a1f6b;
   --muted-foreground: #98abee;
-  --accent: #1d24ca;
-  --accent-foreground: #f9e8c9;
+  --accent: #2a1f6b;
+  --accent-foreground: #98abee;
   --destructive: #fc6b6b;
   --destructive-foreground: #201658;
   --border: rgba(255, 255, 255, 0.1);
@@ -110,6 +72,7 @@
   --chart-3: #f9e8c9;
   --chart-4: #201658;
   --chart-5: #6b6596;
+  --radius: 0.5rem;
   --sidebar: #16113e;
   --sidebar-foreground: #f9e8c9;
   --sidebar-primary: #98abee;

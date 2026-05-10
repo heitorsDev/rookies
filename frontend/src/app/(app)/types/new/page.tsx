@@ -25,7 +25,7 @@ export default function NewTypePage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#faf7f2]">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="space-y-6">

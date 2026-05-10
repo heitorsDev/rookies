@@ -34,7 +34,7 @@ export default function RegisterSuccessPage() {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#faf7f2]">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="flex-1 ml-64 p-6 flex items-center justify-center">
         <div className="max-w-md w-full">
