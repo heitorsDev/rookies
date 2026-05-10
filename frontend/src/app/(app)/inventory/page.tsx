@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Users } from "lucide-react";
+import { Plus, Users, Cpu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InventoryFilters } from "@/features/inventory/components/InventoryFilters";
 import { InventoryTable } from "@/features/inventory/components/InventoryTable";
@@ -50,12 +50,20 @@ export default function InventoryPage() {
             </Button>
           </Link>
           {member?.role === "admin" && (
-            <Link href="/members">
-              <Button variant="outline">
-                <Users className="h-4 w-4" />
-                Team Members
-              </Button>
-            </Link>
+            <>
+              <Link href="/types/new">
+                <Button variant="outline">
+                  <Cpu className="h-4 w-4" />
+                  Create Type
+                </Button>
+              </Link>
+              <Link href="/members">
+                <Button variant="outline">
+                  <Users className="h-4 w-4" />
+                  Team Members
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>
