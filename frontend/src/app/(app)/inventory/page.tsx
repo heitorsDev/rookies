@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InventoryFilters } from "@/features/inventory/components/InventoryFilters";
 import { InventoryTable } from "@/features/inventory/components/InventoryTable";
 import { Pagination } from "@/features/inventory/components/Pagination";
 import { useInventory } from "@/features/inventory/hooks/useInventory";
 import { useComponentTypes } from "@/features/inventory/hooks/useComponentTypes";
+import { useAuth } from "@/features/auth/hooks/AuthContext";
 import Link from "next/link";
 
 const PAGE_SIZE = 20;
 
 export default function InventoryPage() {
+  const { member } = useAuth();
   const [filters, setFilters] = useState({
     status: "",
     type_slug: "",
@@ -40,12 +42,22 @@ export default function InventoryPage() {
             Track and manage your team&apos;s electrical components
           </p>
         </div>
-        <Link href="/register">
-          <Button>
-            <Plus className="h-4 w-4" />
-            Register Component
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/register">
+            <Button>
+              <Plus className="h-4 w-4" />
+              Register Component
+            </Button>
+          </Link>
+          {member?.role === "admin" && (
+            <Link href="/members">
+              <Button variant="outline">
+                <Users className="h-4 w-4" />
+                Team Members
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
 
       <InventoryFilters
