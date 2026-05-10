@@ -640,14 +640,15 @@ Provides the team overview of all components.
 - **Sidebar Navigation**: Fixed left sidebar with navigation links to all main sections:
   - `/inventory` - Component inventory list
   - `/register` - Register new components
-  - `/types` - Manage component types
+  - `/types` - View and manage existing component types
+  - `/types/new` - Schema builder (accessible directly from sidebar, no type creation required)
   - `/members` - Team member management (admin only)
   - User profile display with logout button
   - Role-based visibility (admin items shown only to admins)
 - **Inventory page**: Card or table view, filter bar (status chips, type dropdown, search input), pagination, click to open detail.
 - **Component detail page**: Displays all diagnostic data fields with their labels and units, current status with a change dropdown, notes, history timeline, and attachment viewer.
 - **Dynamic form**: Rendered by the `DynamicForm` component based on the schema fetched from the selected component type. See [Section 9](#9-dynamic-form-engine).
-- **Schema builder** (`/types/new`, `/types/[slug]/edit`): A drag-and-drop field editor allowing the team to add, reorder, and configure field definitions visually without writing code.
+- **Schema builder** (`/types/new`, `/types/[slug]/edit`): A drag-and-drop field editor allowing the team to add, reorder, and configure field definitions visually without writing code. The `/types/new` route must be accessible at any time via the sidebar — users should not need an existing component type to start building a schema.
 
 ### Sidebar Implementation
 

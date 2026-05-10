@@ -7,6 +7,7 @@ import {
   componentTypesApi,
   CreateComponentTypeRequest,
 } from "@/features/component-types/api";
+import { Sidebar } from "@/components/Sidebar";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -54,39 +55,47 @@ export default function EditTypePage({ params }: Props) {
 
   if (isLoading) {
     return (
-      <div className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-8 w-48 bg-muted rounded" />
-          <div className="h-96 bg-muted rounded" />
-        </div>
+      <div className="flex min-h-screen bg-[#faf7f2]">
+        <Sidebar />
+        <main className="flex-1 ml-64 p-6">
+          <div className="animate-pulse space-y-4">
+            <div className="h-8 w-48 bg-muted rounded" />
+            <div className="h-96 bg-muted rounded" />
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Edit Component Type
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Update the schema for {initialData?.name}
-        </p>
-      </div>
+    <div className="flex min-h-screen bg-[#faf7f2]">
+      <Sidebar />
+      <main className="flex-1 ml-64 p-6">
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Edit Component Type
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Update the schema for {initialData?.name}
+            </p>
+          </div>
 
-      {error && (
-        <div className="mb-4 rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
+          {error && (
+            <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          {initialData && (
+            <SchemaBuilder
+              initialData={initialData}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+          )}
         </div>
-      )}
-
-      {initialData && (
-        <SchemaBuilder
-          initialData={initialData}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-        />
-      )}
+      </main>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { DynamicForm } from "@/features/form-engine/DynamicForm"
@@ -10,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { Sidebar } from "@/components/Sidebar"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -57,81 +57,86 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Register Component</h1>
-        <p className="text-muted-foreground mt-1">
-          Register a new electrical component to the inventory
-        </p>
-      </div>
+    <div className="flex min-h-screen bg-[#faf7f2]">
+      <Sidebar />
+      <main className="flex-1 ml-64 p-6">
+        <div className="max-w-2xl mx-auto space-y-6">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Register Component</h1>
+            <p className="text-muted-foreground mt-1">
+              Register a new electrical component to the inventory
+            </p>
+          </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Component Type</CardTitle>
-          <CardDescription>Select the type of component you want to register</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select
-            value={selectedType}
-            onValueChange={setSelectedType}
-            options={componentTypes.map((ct) => ({ value: ct.slug, label: ct.name }))}
-            placeholder="Select component type"
-            disabled={loading}
-          />
-        </CardContent>
-      </Card>
-
-      {selectedComponentType && selectedComponentType.fields.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Diagnostic Data</CardTitle>
-            <CardDescription>
-              Fill in the diagnostic information for this {selectedComponentType.name}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DynamicForm
-              fields={selectedComponentType.fields}
-              onSubmit={handleSubmit}
-              isSubmitting={submitting}
-            />
-          </CardContent>
-        </Card>
-      )}
-
-      {selectedComponentType && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+          <Card>
+            <CardHeader>
+              <CardTitle>Component Type</CardTitle>
+              <CardDescription>Select the type of component you want to register</CardDescription>
+            </CardHeader>
+            <CardContent>
               <Select
-                value={status}
-                onValueChange={setStatus}
-                options={[
-                  { value: "available", label: "Available" },
-                  { value: "in_use", label: "In Use" },
-                  { value: "loaned", label: "Loaned" },
-                  { value: "under_maintenance", label: "Under Maintenance" },
-                ]}
+                value={selectedType}
+                onValueChange={setSelectedType}
+                options={componentTypes.map((ct) => ({ value: ct.slug, label: ct.name }))}
+                placeholder="Select component type"
+                disabled={loading}
               />
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any notes about this component..."
-                rows={3}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          {selectedComponentType && selectedComponentType.fields.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Diagnostic Data</CardTitle>
+                <CardDescription>
+                  Fill in the diagnostic information for this {selectedComponentType.name}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DynamicForm
+                  fields={selectedComponentType.fields}
+                  onSubmit={handleSubmit}
+                  isSubmitting={submitting}
+                />
+              </CardContent>
+            </Card>
+          )}
+
+          {selectedComponentType && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Additional Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status</Label>
+                  <Select
+                    value={status}
+                    onValueChange={setStatus}
+                    options={[
+                      { value: "available", label: "Available" },
+                      { value: "in_use", label: "In Use" },
+                      { value: "loaned", label: "Loaned" },
+                      { value: "under_maintenance", label: "Under Maintenance" },
+                    ]}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Add any notes about this component..."
+                    rows={3}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </main>
     </div>
   )
 }

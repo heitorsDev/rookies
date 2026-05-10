@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, Trash2, Check } from "lucide-react";
+import { Plus, Trash2, Check, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { FieldDefinition, CreateComponentTypeRequest } from "../api";
 
@@ -41,6 +41,47 @@ interface SchemaBuilderProps {
   onSubmit: (data: CreateComponentTypeRequest) => void;
   isSubmitting?: boolean;
 }
+
+const TEMPLATE_FIELDS: FieldDefinition[] = [
+  {
+    field_id: "device_id",
+    label: "CAN Device ID",
+    field_type: "number",
+    required: true,
+    min_value: 0,
+    max_value: 62,
+    help_text: "Device ID on the CAN bus (0-62)",
+  },
+  {
+    field_id: "firmware_version",
+    label: "Firmware Version",
+    field_type: "auto",
+    auto: true,
+    auto_hint: "Paste the firmware version from Phoenix Tuner X or REV Hardware Client",
+    help_text: "Firmware version reported by the device",
+  },
+  {
+    field_id: "peak_current",
+    label: "Peak Current (A)",
+    field_type: "number",
+    min_value: 0,
+    unit: "A",
+    help_text: "Maximum current drawn during operation",
+  },
+  {
+    field_id: "fault_flags",
+    label: "Active Faults",
+    field_type: "multiselect",
+    options: ["Hardware Failure", "Under Voltage", "Reset During Enable", "Motor Fault", "Sensor Fault"],
+    help_text: "Fault flags reported by the device diagnostics",
+  },
+  {
+    field_id: "notes",
+    label: "Mechanical Notes",
+    field_type: "textarea",
+    help_text: "Physical condition, cable integrity, mounting notes",
+  },
+];
 
 function createEmptyField(): FieldDefinition {
   return {
@@ -554,14 +595,38 @@ export function SchemaBuilder({
             </div>
 
             {fields.length === 0 ? (
-              <div className="rounded-xl border-2 border-dashed p-12 text-center">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+              <div className="rounded-xl border-2 border-dashed p-12 text-center space-y-4">
+                <div className="w-12 h-12 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
                   <Plus className="h-6 w-6 text-primary" />
                 </div>
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                  No fields yet. Click &quot;Add Field&quot; to create your first
-                  form field.
+                  No fields yet. Add fields manually or start with a template.
                 </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addField}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Field
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setFields(TEMPLATE_FIELDS);
+                      setExpandedField(0);
+                    }}
+                    className="gap-2 text-muted-foreground"
+                  >
+                    <Copy className="h-4 w-4" />
+                    Insert template fields
+                  </Button>
+                </div>
               </div>
             ) : (
               <DndContext

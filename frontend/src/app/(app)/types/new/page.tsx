@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { SchemaBuilder } from "@/features/component-types/components/SchemaBuilder";
 import { componentTypesApi, CreateComponentTypeRequest } from "@/features/component-types/api";
+import { Sidebar } from "@/components/Sidebar";
 
 export default function NewTypePage() {
   const router = useRouter();
@@ -24,23 +25,28 @@ export default function NewTypePage() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Create Component Type
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Define a new type of electrical component with its diagnostic fields
-        </p>
-      </div>
+    <div className="flex min-h-screen bg-[#faf7f2]">
+      <Sidebar />
+      <main className="flex-1 ml-64 p-6">
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              Create Component Type
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Define a new type of electrical component with its diagnostic fields
+            </p>
+          </div>
 
-      {error && (
-        <div className="mb-4 rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
-          {error}
+          {error && (
+            <div className="rounded-lg bg-destructive/10 p-4 text-sm text-destructive">
+              {error}
+            </div>
+          )}
+
+          <SchemaBuilder onSubmit={handleSubmit} isSubmitting={isSubmitting} />
         </div>
-      )}
-
-      <SchemaBuilder onSubmit={handleSubmit} isSubmitting={isSubmitting} />
+      </main>
     </div>
   );
 }
