@@ -27,7 +27,7 @@ Authorization: Bearer <jwt>
 
 #### `POST /auth/seed`
 
-Bootstrap the first admin account. Requires a `seed_key` query parameter matching the `SEED_KEY` env variable. Only works when no members exist in the database.
+Bootstrap the first admin account. Requires a `seed_key` query parameter matching the `SEED_KEY` env variable. Only works when no members exist in the database. The created account is automatically activated with the provided password.
 
 **Query Parameters:**
 
@@ -40,17 +40,22 @@ Bootstrap the first admin account. Requires a `seed_key` query parameter matchin
 {
   "name": "Admin User",
   "username": "admin",
-  "role": "admin"
+  "password": "my-secure-password"
 }
 ```
 
-**Response `201`:** `TokenResponse`
+**Response `200`:** `SeedResponse`
 ```json
 {
-  "token": "<one-time-activation-token>",
+  "message": "Admin account created successfully",
   "username": "admin"
 }
 ```
+
+**Errors:**
+- `403` if seed_key doesn't match
+- `404` if seed_key is not configured
+- `400` if members already exist in the database
 
 ---
 
