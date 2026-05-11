@@ -31,14 +31,6 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export function getToken(): string | null {
-  return null;
-}
-
-export function setToken(_token: string) {}
-
-export function clearToken() {}
-
 async function request<T>(
   path: string,
   options: RequestInit = {}

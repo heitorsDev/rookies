@@ -1,20 +1,13 @@
-from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Cookie, Depends, HTTPException, status
 
 from app.features.auth.models import Member
 from app.features.auth.service import decode_jwt, get_member_by_username
 
-security = HTTPBearer(auto_error=False)
-
 
 async def get_current_member(
-    request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    access_token: str | None = Cookie(None),
 ) -> Member:
-    token = credentials.credentials if credentials else None
-
-    if not token:
-        token = request.cookies.get("access_token")
+    token = access_token
 
     if not token:
         raise HTTPException(
