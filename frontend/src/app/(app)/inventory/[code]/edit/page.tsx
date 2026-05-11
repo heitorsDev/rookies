@@ -32,6 +32,7 @@ interface DiagnosticField {
   min_value?: number
   max_value?: number
   unit?: string
+  placeholder?: string
   auto?: boolean
   auto_hint?: string
 }
