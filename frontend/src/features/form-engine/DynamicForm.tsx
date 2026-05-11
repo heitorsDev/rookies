@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
 import { Slider } from "@/components/ui/slider"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
@@ -106,12 +105,12 @@ export function DynamicForm({
   const defaultValues = useMemo(() => {
     const defaults: Record<string, unknown> = {}
     for (const field of fields) {
-      if (field.field_type === "multiselect") {
+      if (initialData && initialData[field.field_id] !== undefined) {
+        defaults[field.field_id] = initialData[field.field_id]
+      } else if (field.field_type === "multiselect") {
         defaults[field.field_id] = []
       } else if (field.field_type === "boolean") {
         defaults[field.field_id] = false
-      } else if (initialData?.[field.field_id] !== undefined) {
-        defaults[field.field_id] = initialData[field.field_id]
       } else {
         defaults[field.field_id] = ""
       }
@@ -198,9 +197,10 @@ export function DynamicForm({
             )}
 
             {field.field_type === "boolean" && (
-              <Switch
+              <Checkbox
                 checked={ Boolean(value) }
                 onCheckedChange={(checked) => setValue(field.field_id, checked)}
+                label={field.label}
               />
             )}
 

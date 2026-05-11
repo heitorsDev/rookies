@@ -39,6 +39,7 @@ interface DiagnosticField {
 interface ComponentData {
   code: string
   component_type: string
+  component_type_slug: string
   status: string
   diagnostic_data: Record<string, unknown>
   notes?: string
@@ -128,13 +129,30 @@ function InputField({
 
   switch (field.field_type) {
     case "text":
+    case "textarea":
       return (
         <div className="space-y-2">
           <Label htmlFor={field.field_id}>
             {field.label}
             {field.required && <span className="text-destructive ml-1">*</span>}
           </Label>
-          <Input id={field.field_id} {...register(field.field_id)} readOnly={field.auto} />
+          {field.field_type === "textarea" ? (
+            <Textarea
+              id={field.field_id}
+              value={String(value ?? "")}
+              onChange={(e) => setValue(field.field_id, e.target.value)}
+              readOnly={field.auto}
+              placeholder={field.placeholder}
+            />
+          ) : (
+            <Input
+              id={field.field_id}
+              value={String(value ?? "")}
+              onChange={(e) => setValue(field.field_id, e.target.value)}
+              readOnly={field.auto}
+              placeholder={field.placeholder}
+            />
+          )}
           {field.auto && field.auto_hint && (
             <p className="text-xs text-muted-foreground">{field.auto_hint}</p>
           )}
@@ -154,7 +172,14 @@ function InputField({
               id={field.field_id}
               type="number"
               step="any"
-              {...register(field.field_id, { valueAsNumber: true })}
+              value={value !== undefined && value !== "" ? String(value) : ""}
+              onChange={(e) =>
+                setValue(
+                  field.field_id,
+                  e.target.value === "" ? undefined : parseFloat(e.target.value),
+                  { shouldDirty: true }
+                )
+              }
               className={field.unit ? "pr-12" : ""}
             />
             {field.unit && (
@@ -229,12 +254,52 @@ function InputField({
         <div className="space-y-2">
           <Label htmlFor={field.field_id}>{field.label}</Label>
           <Select
-            value={String(value ?? "false")}
+            value={String(value ?? "")}
             onValueChange={(val) => setValue(field.field_id, val === "true")}
             options={[
               { value: "true", label: "Yes" },
               { value: "false", label: "No" },
             ]}
+          />
+          {error?.message && <p className="text-sm text-destructive">{error.message}</p>}
+        </div>
+      )
+
+    case "range":
+      return (
+        <div className="space-y-2">
+          <Label htmlFor={field.field_id}>
+            {field.label}
+            {field.required && <span className="text-destructive ml-1">*</span>}
+          </Label>
+          <Input
+            id={field.field_id}
+            type="range"
+            min={field.min_value ?? 0}
+            max={field.max_value ?? 100}
+            value={value !== undefined ? String(value) : String(field.min_value ?? 0)}
+            onChange={(e) => setValue(field.field_id, parseFloat(e.target.value))}
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{field.min_value ?? 0}</span>
+            <span>{field.max_value ?? 100}</span>
+          </div>
+          {error?.message && <p className="text-sm text-destructive">{error.message}</p>}
+        </div>
+      )
+
+    case "date":
+      return (
+        <div className="space-y-2">
+          <Label htmlFor={field.field_id}>
+            {field.label}
+            {field.required && <span className="text-destructive ml-1">*</span>}
+          </Label>
+          <Input
+            id={field.field_id}
+            type="date"
+            value={String(value ?? "")}
+            onChange={(e) => setValue(field.field_id, e.target.value)}
           />
           {error?.message && <p className="text-sm text-destructive">{error.message}</p>}
         </div>
@@ -247,7 +312,11 @@ function InputField({
             {field.label}
             {field.required && <span className="text-destructive ml-1">*</span>}
           </Label>
-          <Input id={field.field_id} {...register(field.field_id)} />
+          <Input
+            id={field.field_id}
+            value={String(value ?? "")}
+            onChange={(e) => setValue(field.field_id, e.target.value)}
+          />
           {error?.message && <p className="text-sm text-destructive">{error.message}</p>}
         </div>
       )
@@ -266,15 +335,17 @@ export default function EditComponentPage({ params }: Props) {
   useEffect(() => {
     params.then((p) => {
       setCode(p.code)
-      Promise.all([
-        api.get<ComponentData>(`/components/${p.code}`),
-        api.get<ComponentTypeData>(`/component-types/${p.code.split("-")[0]}`),
-      ])
-        .then(([comp, type]) => {
-          setComponent(comp)
-          setComponentType(type)
-          setStatus(comp.status)
-          setLoanInfo(comp.loan_info || {})
+        Promise.all([
+          api.get<ComponentData>(`/components/${p.code}`),
+        ])
+          .then(([comp]) => {
+            setComponent(comp)
+            const slugPart = comp.component_type_slug
+            api.get<ComponentTypeData>(`/component-types/${slugPart}`).then((type) => {
+              setComponentType(type)
+            })
+            setStatus(comp.status)
+            setLoanInfo(comp.loan_info || {})
         })
         .catch(() => {
           toast.error("Failed to load component")
@@ -301,10 +372,10 @@ export default function EditComponentPage({ params }: Props) {
   })
 
   const {
-    register,
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors },
   } = useForm({
     resolver: componentType?.fields
@@ -314,11 +385,13 @@ export default function EditComponentPage({ params }: Props) {
 
   useEffect(() => {
     if (component?.diagnostic_data) {
-      Object.entries(component.diagnostic_data).forEach(([key, value]) => {
-        setValue(key, value)
-      })
+      const defaults: Record<string, unknown> = {}
+      for (const [key, value] of Object.entries(component.diagnostic_data)) {
+        defaults[key] = value
+      }
+      reset(defaults)
     }
-  }, [component, setValue])
+  }, [component, reset])
 
   function onSubmit(data: Record<string, unknown>) {
     const diagnosticData: Record<string, unknown> = {}
