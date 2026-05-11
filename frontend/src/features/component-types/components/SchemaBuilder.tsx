@@ -103,14 +103,14 @@ function createEmptyField(): FieldDefinition {
 function generateFieldId(label: string): string {
   return label
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/[^a-z0-9]+/g, "")
     .replace(/^_+|_+$/g, "");
 }
 
 function generateSlug(name: string): string {
   return name
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/[^a-z0-9]+/g, "")
     .replace(/^-+|-+$/g, "");
 }
 
@@ -247,7 +247,7 @@ function SortableFieldCard({
               <input
                 type="text"
                 value={field.field_id}
-                onChange={(e) => onUpdate({ field_id: e.target.value })}
+                onChange={(e) => onUpdate({ field_id: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "") })}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="field_id"
               />
