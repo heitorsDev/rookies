@@ -1,7 +1,6 @@
 "use client"
 
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { useMemo } from "react"
 import { Input } from "@/components/ui/input"
@@ -21,6 +20,7 @@ interface DynamicFormProps {
   onSubmit: (data: Record<string, unknown>) => void
   isSubmitting?: boolean
   className?: string
+  initialData?: Record<string, unknown>
 }
 
 function buildSchema(fields: FieldDefinition[]) {
@@ -99,8 +99,25 @@ export function DynamicForm({
   onSubmit,
   isSubmitting = false,
   className,
+  initialData,
 }: DynamicFormProps) {
   const schema = useMemo(() => buildSchema(fields), [fields])
+
+  const defaultValues = useMemo(() => {
+    const defaults: Record<string, unknown> = {}
+    for (const field of fields) {
+      if (field.field_type === "multiselect") {
+        defaults[field.field_id] = []
+      } else if (field.field_type === "boolean") {
+        defaults[field.field_id] = false
+      } else if (initialData?.[field.field_id] !== undefined) {
+        defaults[field.field_id] = initialData[field.field_id]
+      } else {
+        defaults[field.field_id] = ""
+      }
+    }
+    return defaults
+  }, [fields, initialData])
 
   const {
     register,
@@ -109,7 +126,7 @@ export function DynamicForm({
     watch,
     formState: { errors },
   } = useForm({
-    resolver: zodResolver(schema),
+    defaultValues,
   })
 
   const watchedValues = watch()

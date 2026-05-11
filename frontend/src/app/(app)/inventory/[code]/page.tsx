@@ -177,7 +177,7 @@ export default function ComponentDetailPage({ params }: Props) {
             </div>
             <div className="flex items-center gap-2">
               <StatusBadge status={component.status} />
-              <Link href={`/inventory/${code}/edit`} className={buttonVariants()}>
+              <Link href={`/register?code=${code}`} className={buttonVariants()}>
                 Edit
               </Link>
               {component.status !== "decommissioned" && (
