@@ -1,4 +1,5 @@
 "use client"
+import { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,14 @@ import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/Sidebar"
 
 export default function RegisterSuccessPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen bg-background items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>}>
+      <RegisterSuccessContent />
+    </Suspense>
+  )
+}
+
+function RegisterSuccessContent() {
   const searchParams = useSearchParams()
   const code = searchParams.get("code")
   const [copied, setCopied] = useState(false)
