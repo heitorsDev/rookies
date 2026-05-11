@@ -228,19 +228,12 @@ function SortableFieldCard({
               <input
                 type="text"
                 value={field.label}
-                onChange={(e) => {
-                  const label = e.target.value;
-                  onUpdate({ label });
-                  if (!field.field_id || field.field_id === generateFieldId(field.label)) {
-                    onUpdate({ field_id: generateFieldId(label) });
-                  }
-                }}
+                onChange={(e) => onUpdate({ label: e.target.value })}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="Field display label"
                 autoComplete="off"
               />
             </div>
-            {field.label && (
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Field ID
@@ -250,71 +243,11 @@ function SortableFieldCard({
                 value={field.field_id}
                 onChange={(e) => onUpdate({ field_id: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "") })}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="field_id"
+placeholder="field_id"
                 autoComplete="off"
               />
             </div>
-          )}
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Field Type
-              </label>
-              <select
-                value={field.field_type}
-                onChange={(e) => onUpdate({ field_type: e.target.value })}
-                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
-              >
-                {FIELD_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="flex items-center gap-3 pt-6">
-              <button
-                type="button"
-                onClick={() => onUpdate({ required: !field.required })}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all ${
-                  field.required
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-background border-input hover:border-primary"
-                }`}
-              >
-                <span
-                  className={`h-4 w-4 rounded flex items-center justify-center transition-colors ${
-                    field.required ? "bg-white/20" : "border border-muted-foreground"
-                  }`}
-                >
-                  {field.required && <Check className="h-3 w-3" />}
-                </span>
-                Required
-              </button>
-            </div>
-          </div>
-
-          {(field.field_type === "select" ||
-            field.field_type === "multiselect") && (
-            <div>
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Options
-              </label>
-              <textarea
-                value={field.options?.join("\n") ?? ""}
-                onChange={(e) =>
-                  onUpdate({
-                    options: e.target.value.split("\n").filter((o) => o.trim()),
-                  })
-                }
-                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                placeholder="Option 1&#10;Option 2&#10;Option 3"
-                rows={4}
-              />
-            </div>
-          )}
 
           {field.field_type === "number" && (
             <div className="grid grid-cols-3 gap-4">
