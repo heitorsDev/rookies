@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { InventoryFilters } from "@/features/inventory/components/InventoryFilters";
 import { InventoryTable } from "@/features/inventory/components/InventoryTable";
 import { Pagination } from "@/features/inventory/components/Pagination";
 import { useInventory } from "@/features/inventory/hooks/useInventory";
 import { useComponentTypes } from "@/features/inventory/hooks/useComponentTypes";
 import { Sidebar } from "@/components/Sidebar";
+import { Button } from "@/components/ui/button";
+import { Plus, Layers } from "lucide-react";
 
 const PAGE_SIZE = 20;
 
@@ -32,13 +35,29 @@ export default function InventoryPage() {
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Component Inventory
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Track and manage your team&apos;s electrical components
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                Component Inventory
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Track and manage your team&apos;s electrical components
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/types">
+                <Button variant="outline" size="sm">
+                  <Layers className="h-4 w-4 mr-2" />
+                  Component Types
+                </Button>
+              </Link>
+              <Link href="/register">
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Register Component
+                </Button>
+              </Link>
+            </div>
           </div>
 
           <InventoryFilters

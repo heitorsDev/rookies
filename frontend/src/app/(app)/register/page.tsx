@@ -1,6 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { DynamicForm } from "@/features/form-engine/DynamicForm"
 import { componentTypesApi, type ComponentType } from "@/features/component-types/api"
 import { componentsApi, type CreateComponentRequest } from "@/features/components/api"
@@ -8,8 +9,10 @@ import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Sidebar } from "@/components/Sidebar"
+import { ArrowLeft, Layers } from "lucide-react"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -61,11 +64,24 @@ export default function RegisterPage() {
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="max-w-2xl mx-auto space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Register Component</h1>
-            <p className="text-muted-foreground mt-1">
-              Register a new electrical component to the inventory
-            </p>
+          <div className="flex items-center gap-4">
+            <Link href="/inventory">
+              <Button variant="ghost" size="icon-sm">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="flex-1">
+              <h1 className="text-2xl font-semibold tracking-tight">Register Component</h1>
+              <p className="text-muted-foreground mt-1">
+                Register a new electrical component to the inventory
+              </p>
+            </div>
+            <Link href="/types">
+              <Button variant="outline" size="sm">
+                <Layers className="h-4 w-4 mr-2" />
+                Component Types
+              </Button>
+            </Link>
           </div>
 
           <Card>

@@ -2,12 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { SchemaBuilder } from "@/features/component-types/components/SchemaBuilder";
 import {
   componentTypesApi,
   CreateComponentTypeRequest,
 } from "@/features/component-types/api";
 import { Sidebar } from "@/components/Sidebar";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, X } from "lucide-react";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -45,7 +48,7 @@ export default function EditTypePage({ params }: Props) {
     setError(null);
     try {
       await componentTypesApi.update(slug, data);
-      router.push("/types");
+      router.push(`/types/${slug}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update component type");
     } finally {
@@ -72,13 +75,20 @@ export default function EditTypePage({ params }: Props) {
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Edit Component Type
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Update the schema for {initialData?.name}
-            </p>
+          <div className="flex items-center gap-4">
+            <Link href={`/types/${slug}`}>
+              <Button variant="ghost" size="icon-sm">
+                <X className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div className="flex-1">
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                Edit Component Type
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Update the schema for {initialData?.name}
+              </p>
+            </div>
           </div>
 
           {error && (

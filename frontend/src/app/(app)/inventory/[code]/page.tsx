@@ -9,6 +9,7 @@ import { StatusBadge } from "@/features/inventory/components/StatusBadge";
 import { buttonVariants } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { PageHeader } from "@/components/Breadcrumbs";
 
 interface ComponentResponse {
   code: string
@@ -148,20 +149,22 @@ export default function ComponentDetailPage({ params }: Props) {
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="max-w-4xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">{component.code}</h1>
-              <p className="text-muted-foreground mt-1">
-                {componentType?.name ?? component.component_type}
-              </p>
+          <PageHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">{component.code}</h1>
+                <p className="text-muted-foreground mt-1">
+                  {componentType?.name ?? component.component_type}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge status={component.status} />
+                <Link href={`/inventory/${code}/edit`} className={buttonVariants()}>
+                  Edit
+                </Link>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <StatusBadge status={component.status} />
-              <Link href={`/inventory/${code}/edit`} className={buttonVariants()}>
-                Edit
-              </Link>
-            </div>
-          </div>
+          </PageHeader>
 
           {component.status === "loaned" && component.loan_info && (
             <Card>

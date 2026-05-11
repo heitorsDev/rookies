@@ -69,9 +69,10 @@ function buildDiagnosticSchema(fields: DiagnosticField[]) {
   const shape: Record<string, z.ZodType> = {}
 
   for (const field of fields) {
-    let schema: z.ZodType
+    let schema: z.ZodType = z.string()
+    const fieldType = field.field_type || "text"
 
-    switch (field.field_type) {
+    switch (fieldType) {
       case "number": {
         let numberSchema: z.ZodNumber = z.coerce.number()
         if (field.min_value !== undefined) numberSchema = numberSchema.min(field.min_value) as z.ZodNumber
@@ -96,10 +97,10 @@ function buildDiagnosticSchema(fields: DiagnosticField[]) {
     }
 
     if (field.required) {
-      if (field.field_type === "multiselect") {
+      if (fieldType === "multiselect") {
         schema = (schema as z.ZodArray<z.ZodString>).min(1) as z.ZodType
       } else {
-        schema = (schema as z.ZodString).min(1, { message: `${field.label} is required` }) as z.ZodType
+        schema = (schema as z.ZodString).min(1, { error: `${field.label} is required` }) as z.ZodType
       }
     } else {
       schema = schema.optional() as z.ZodType

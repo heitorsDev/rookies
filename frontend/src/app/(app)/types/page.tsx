@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Eye, Plus } from "lucide-react";
+import { Pencil, Eye, Plus, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useComponentTypes } from "@/features/component-types/hooks/useComponentTypes";
 import Link from "next/link";
@@ -14,13 +14,29 @@ export default function TypesPage() {
       <Sidebar />
       <main className="flex-1 ml-64 p-6">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-              Component Types
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Manage component type schemas for your inventory
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                Component Types
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Manage component type schemas for your inventory
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/inventory">
+                <Button variant="outline" size="sm">
+                  <Package className="h-4 w-4 mr-2" />
+                  Inventory
+                </Button>
+              </Link>
+              <Link href="/types/new">
+                <Button size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Type
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {isLoading ? (
