@@ -64,6 +64,7 @@ Rookies is an internal team tool for registering, tracking, and diagnosing elect
 | Update Component Types | ✅ | ✅ |
 | Delete/Archive Component Types | ✅ | ✅ |
 | Create team member accounts | ❌ | ✅ |
+| Create team member accounts with admin role | ❌ | ✅ |
 | Revoke / deactivate member accounts | ❌ | ✅ |
 | Generate new login tokens for members | ❌ | ✅ |
 | View all member accounts | ❌ | ✅ |
@@ -281,6 +282,7 @@ class Member(Document):
     username     = StringField(required=True, unique=True)  # Login handle, e.g. "joaosilva"
     role         = StringField(required=True, choices=['member', 'admin'], default='member')
     is_active    = BooleanField(default=True)           # False = account revoked
+    is_activated = BooleanField(default=False)        # False = password not yet set
     login_token_hash = StringField()                    # bcrypt hash of the one-time activation token
     token_issued_at  = DateTimeField()                  # when the current token was generated
     password_hash    = StringField()                    # bcrypt hash of the member's chosen password
@@ -626,7 +628,8 @@ Provides the team overview of all components.
 
 | Route | Description |
 |---|---|
-| `/` | Redirect to `/inventory` |
+| `/setup` | First-time setup — create the first admin account (only if no members exist) |
+| `/` | Landing page — documentation-style guide explaining how the system works and how to use it. No technical jargon; plain language for all team members. |
 | `/activate` | Activate account using one-time token and set password |
 | `/login` | Login with username and password |
 | `/inventory` | Component inventory list with filters |
@@ -638,6 +641,7 @@ Provides the team overview of all components.
 | `/types/new` | Create a new component type (schema builder) |
 | `/types/[slug]` | View a component type's schema |
 | `/types/[slug]/edit` | Edit a component type's schema |
+| `/members` | Team member management (admin only) — create members with role selection |
 
 ### Key Frontend Features
 
@@ -859,11 +863,12 @@ sequence = counter.value
 
 7. Access the API at `http://localhost:8000`. The interactive docs are at `http://localhost:8000/docs`.
 
-8. **Seed the first admin account** (first time only):
-   ```powershell
-   curl -X POST "http://localhost:8000/api/v1/auth/seed?key=dev-seed-key-123"
-   ```
-   This creates the first admin account. Update the admin's username/password via `POST /auth/activate`.
+8. Access the API at `http://localhost:8000`. The interactive docs are at `http://localhost:8000/docs`.
+
+9. **Seed the first admin account** (first time only):
+   - Visit `http://localhost:3000/setup` in your browser
+   - Enter your name, username, and set a password
+   - This creates the first admin account and logs you in directly
 
 ### 13.2 CLI Commands
 

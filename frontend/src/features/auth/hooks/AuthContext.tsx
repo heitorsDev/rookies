@@ -60,8 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string) => {
     const response = await authApi.login({ username, password });
-    setMember(response);
-    toast.success(`Welcome back, ${response.name}!`);
+    setMember(response.member);
+    toast.success(`Welcome back, ${response.member.name}!`);
   };
 
   const logout = async () => {
