@@ -182,12 +182,6 @@ def list_members() -> list[Member]:
 
 
 def seed_first_admin(name: str, username: str, password: str | None = None) -> tuple[Member, str]:
-    if Member.objects.count() > 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot seed: members already exist in the database",
-        )
-
     member = Member(
         name=name,
         username=username,

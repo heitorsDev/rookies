@@ -69,7 +69,7 @@ Rookies is an internal team tool for registering, tracking, and diagnosing elect
 | Generate new login tokens for members | ❌ | ✅ |
 | View all member accounts | ❌ | ✅ |
 
-- The first account in Rookies is **automatically assigned the `admin` role** (bootstrapped via a CLI command or an env-variable-protected seed endpoint). All subsequent accounts default to `member` unless explicitly promoted.
+- Accounts created via the seed endpoint are **assigned the `admin` role**. Accounts created via the admin UI default to `member` unless explicitly promoted.
 - An admin cannot demote themselves if they are the only admin in Rookies.
 
 ### 2.2 Component Types (Schemas)
@@ -572,7 +572,7 @@ Provides the team overview of all components.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/auth/seed` | Seed key (query) | Bootstrap the first admin account |
+| `POST` | `/auth/seed` | Seed key (query) | Create an admin account |
 | `POST` | `/auth/members` | Admin JWT | Create a new member and return a one-time activation token |
 | `POST` | `/auth/tokens` | Admin JWT | Generate a new activation token for a member |
 | `POST` | `/auth/activate` | None | Activate an account using the one-time token and set a password |
@@ -628,7 +628,7 @@ Provides the team overview of all components.
 
 | Route | Description |
 |---|---|
-| `/setup` | First-time setup — create the first admin account (only if no members exist) |
+| `/setup` | Setup — create admin accounts |
 | `/` | Landing page — documentation-style guide explaining how the system works and how to use it. No technical jargon; plain language for all team members. |
 | `/activate` | Activate account using one-time token and set password |
 | `/login` | Login with username and password |
@@ -863,12 +863,10 @@ sequence = counter.value
 
 7. Access the API at `http://localhost:8000`. The interactive docs are at `http://localhost:8000/docs`.
 
-8. Access the API at `http://localhost:8000`. The interactive docs are at `http://localhost:8000/docs`.
-
-9. **Seed the first admin account** (first time only):
+9. **Create an admin account**:
    - Visit `http://localhost:3000/setup` in your browser
    - Enter your name, username, and set a password
-   - This creates the first admin account and logs you in directly
+   - This creates an admin account
 
 ### 13.2 CLI Commands
 

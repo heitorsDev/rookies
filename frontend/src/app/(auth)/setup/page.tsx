@@ -19,18 +19,7 @@ export default function SetupPage() {
   const router = useRouter();
 
   useEffect(() => {
-    async function checkSystem() {
-      try {
-        const members = await authApi.listMembers();
-        if (members && members.length > 0) {
-          router.replace("/login");
-        }
-      } catch {
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    checkSystem();
+    setIsLoading(false);
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,14 +39,12 @@ export default function SetupPage() {
     setIsSubmitting(true);
 
     try {
-      await authApi.seedAdmin(
-        {
+      await authApi.seedAdmin({
           name,
           username: username.toLowerCase().replace(/[^a-z0-9]/g, ""),
           password,
-        },
-        seedKey || undefined
-      );
+          seed_key: seedKey || undefined,
+        });
       setSuccess(true);
       setTimeout(() => {
         router.push("/login");

@@ -107,17 +107,14 @@ async def logout(response: Response):
 
 
 @router.post("/seed", response_model=TokenResponse)
-async def seed_first_admin(
-    body: SeedAdminRequest,
-    seed_key: str | None = Query(None, description="Optional seed key from env"),
-):
-    if settings.seed_key and seed_key != settings.seed_key:
+async def seed_first_admin(body: SeedAdminRequest):
+    if settings.seed_key and body.seed_key != settings.seed_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid seed key",
         )
 
-    if settings.seed_key and not seed_key:
+    if settings.seed_key and not body.seed_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Seed key required",
@@ -126,4 +123,4 @@ async def seed_first_admin(
     member, raw_token = await asyncio.to_thread(
         service.seed_first_admin, body.name, body.username, body.password
     )
-    return TokenResponse(token=raw_token, username=member.username)
+    return TokenResponse(token=raw_token or "", username=member.username)
