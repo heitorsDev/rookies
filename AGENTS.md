@@ -603,11 +603,11 @@ Provides the team overview of all components.
 }
 ```
 
+> **IMPORTANT**: The access token is returned ONLY via an `HttpOnly` cookie named `access_token`. It is **NOT** included in the JSON response body.
+
 **POST `/auth/login` response:**
 ```json
 {
-  "access_token": "<jwt>",
-  "token_type": "bearer",
   "member": {
     "name": "João Silva",
     "username": "joaosilva",
@@ -619,6 +619,13 @@ Provides the team overview of all components.
   }
 }
 ```
+
+The `access_token` cookie is automatically set by the backend with the following attributes:
+- `HttpOnly: true` - Prevents JavaScript access
+- `SameSite: Strict` - Prevents CSRF attacks
+- `Secure: true` (production only)
+- `Max-Age: 86400` (24 hours)
+- `Path: /`
 
 ---
 
@@ -820,6 +827,225 @@ sequence = counter.value
 - Backend: `pytest` with `mongomock` for unit tests on service functions.
 - Frontend: `vitest` + `@testing-library/react` for component tests.
 - At minimum, test: code generation logic, field validation in dynamic forms, and status transition enforcement.
+
+### 12.6 Cookie-Based Token Storage (STRICT REQUIREMENTS)
+
+All authentication tokens **MUST** be stored and accessed exclusively via HTTP-only cookies. LocalStorage, sessionStorage, or any client-side JavaScript access is **FORBIDDEN** for token storage.
+
+#### 12.6.1 Backend Cookie Configuration
+
+All cookie setting must follow these strict rules:
+
+| Cookie Attribute | Value | Required Reason |
+|---|---|---|
+| `name` | `access_token` | Fixed cookie name for consistency |
+| `httponly` | `True` | **MANDATORY** - Prevents XSS token theft |
+| `samesite` | `Strict` | Prevents CSRF attacks from cross-site requests |
+| `secure` | `True` (production) / `False` (dev) | Encrypts cookie in transit |
+| `max_age` | `86400` (24 hours) | Token expiration in seconds |
+| `path` | `/` | Available on all routes |
+| `domain` | Not set | Defaults to current domain only |
+
+**Example (FastAPI/Python):**
+```python
+from fastapi import Response
+from datetime import timedelta
+
+response.set_cookie(
+    key="access_token",
+    value=token,
+    httponly=True,
+    samesite="Strict",
+    secure=not is_development,  # True in production
+    max_age=86400,  # 24 hours
+    path="/"
+)
+```
+
+#### 12.6.2 Backend Token Extraction
+
+The backend **MUST** extract the token from the cookie, NOT from the `Authorization` header. All protected routes must use cookie-based authentication:
+
+```python
+from fastapi import Cookie, Depends, HTTPException
+
+async def get_current_member(access_token: str = Cookie(None)):
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    # Verify token and return member...
+```
+
+**All protected endpoints must:**
+1. Extract token from `access_token` cookie
+2. Validate token signature and expiration
+3. Reject requests without valid cookie (return 401)
+4. Never accept tokens from `Authorization` header
+
+#### 12.6.3 Frontend Cookie Access (RESTRICTED)
+
+**STRICTLY FORBIDDEN:**
+- Reading `document.cookie` in JavaScript
+- Storing tokens in localStorage or sessionStorage
+- Accessing cookie value via any JS variable
+
+**ALLOWED (Server Components Only):**
+```typescript
+// Next.js Server Component - allowed
+import { cookies } from 'next/headers';
+
+async function getAuth() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('access_token')?.value;
+  // Server-side token verification...
+}
+```
+
+**ALLOWED (Server Actions):**
+```typescript
+'use server'
+import { cookies } from 'next/headers';
+
+export async function serverAction() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('access_token')?.value;
+  // Use token for server-side API calls...
+}
+```
+
+#### 12.6.4 Frontend API Calls (Server-Side Only)
+
+All API calls that require authentication **MUST** be made from the server (Server Components or Server Actions), never from client-side `useEffect` or event handlers:
+
+```typescript
+// CORRECT - Server Component fetches with credentials
+async function Page() {
+  const cookieStore = await cookies();
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory`, {
+    headers: {
+      'Cookie': `access_token=${cookieStore.get('access_token')?.value}`
+    }
+  });
+}
+
+// CORRECT - Server Action makes authenticated request
+'use server'
+async function createComponent(formData: FormData) {
+  const cookieStore = await cookies();
+  await fetch('/api/v1/components', {
+    method: 'POST',
+    headers: {
+      'Cookie': `access_token=${cookieStore.get('access_token')?.value}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({...})
+  });
+}
+```
+
+**FORBIDDEN on Client:**
+```typescript
+// NEVER DO THIS
+const token = localStorage.getItem('token'); // FORBIDDEN
+const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }}); // FORBIDDEN
+```
+
+#### 12.6.5 Login Flow with Cookies
+
+The login flow **MUST** return the token exclusively in the cookie, NOT in the JSON body:
+
+```python
+# CORRECT - Backend login response
+@router.post("/auth/login")
+async def login(response: Response, credentials: LoginSchema):
+    # ... validate credentials ...
+    token = create_access_token(...)
+    
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        samesite="Strict",
+        secure=not is_dev,
+        max_age=86400,
+        path="/"
+    )
+    
+    # Token NOT included in JSON response
+    return {"member": {...}}  # No access_token field
+```
+
+```typescript
+// CORRECT - Frontend login handler (Client Component)
+'use client'
+import { useRouter } from 'next/navigation';
+
+export function LoginForm() {
+  const router = useRouter();
+  
+  async function onSubmit(data: LoginData) {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',  // Critical: sends/receives cookies
+      body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+      router.push('/inventory');  // Redirect after successful cookie set
+    }
+  }
+}
+```
+
+**CRITICAL:** The `credentials: 'include'` fetch option is required to enable cookie transmission.
+
+#### 12.6.6 Logout Flow
+
+Logout **MUST** clear the cookie, not just redirect:
+
+```python
+# Backend logout
+@router.post("/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        samesite="Strict",
+        secure=not is_dev
+    )
+    return {"detail": "Logged out"}
+```
+
+```typescript
+// Frontend logout (Server Action)
+'use server'
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+
+export async function logout() {
+  const cookieStore = await cookies();
+  cookieStore.delete('access_token');
+  
+  await fetch(`${API_URL}/auth/logout`, { 
+    method: 'POST',
+    credentials: 'include'
+  });
+  
+  redirect('/login');
+}
+```
+
+#### 12.6.7 Cookie Security Checklist
+
+| Rule | Enforcement |
+|---|---|
+| Token stored in `HttpOnly` cookie | **MANDATORY** - No JS access |
+| `SameSite=Strict` set | **MANDATORY** - CSRF protection |
+| `Secure` flag in production | **MANDATORY** - HTTPS only |
+| No token in JSON response body | **MANDATORY** - Cookie-only delivery |
+| No localStorage/sessionStorage | **FORBIDDEN** - XSS vulnerable |
+| Server-side API calls only | **MANDATORY** - No client-side auth headers |
+| `credentials: 'include'` on fetch | **MANDATORY** - Cookie transmission |
 
 ---
 
