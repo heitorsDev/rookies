@@ -37,9 +37,6 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(components_router, prefix="/api/v1")
 app.include_router(component_types_router, prefix="/api/v1")
-
-app.include_router(components_router, prefix="/api/v1")
-
 app.include_router(inventory_router, prefix="/api/v1")
 
 
