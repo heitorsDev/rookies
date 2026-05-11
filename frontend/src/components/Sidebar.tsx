@@ -21,7 +21,7 @@ export function Sidebar() {
     <aside className="fixed left-0 top-0 h-full w-64 bg-[var(--sidebar)] border-r border-[var(--sidebar-border)] flex flex-col z-50">
       <div className="p-6">
         <Link
-          href="/inventory"
+          href="/"
           className="text-xl font-bold text-[var(--sidebar-foreground)] tracking-tight"
         >
           Rookies
