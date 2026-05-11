@@ -186,7 +186,6 @@ function SortableFieldCard({
             )}
           </p>
           <p className="text-xs text-muted-foreground">
-            {field.field_id || "no field_id"} &middot;{" "}
             {FIELD_TYPES.find((t) => t.value === field.field_type)?.label ||
               field.field_type}
             {field.required && (
