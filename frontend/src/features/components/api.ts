@@ -54,6 +54,8 @@ export const componentsApi = {
   get: (code: string) => api.get<Component>(`/components/${code}`),
   update: (code: string, data: UpdateComponentRequest) =>
     api.patch<Component>(`/components/${code}`, data),
+  archive: (code: string) =>
+    api.delete<{ detail: string }>(`/components/${code}`),
   history: (code: string) =>
     api.get<HistoryEntry[]>(`/components/${code}/history`),
 };

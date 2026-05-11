@@ -1,13 +1,35 @@
 "use client";
 
-import { Pencil, Eye, Plus } from "lucide-react";
+import { useState } from "react";
+import { Pencil, Eye, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useComponentTypes } from "@/features/component-types/hooks/useComponentTypes";
+import { componentTypesApi } from "@/features/component-types/api";
 import Link from "next/link";
 import { Sidebar } from "@/components/Sidebar";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function TypesPage() {
-  const { data: componentTypes, isLoading } = useComponentTypes();
+  const router = useRouter();
+  const { data: componentTypes, isLoading, refetch } = useComponentTypes();
+  const [deletingSlug, setDeletingSlug] = useState<string | null>(null);
+
+  const handleDelete = async (slug: string) => {
+    if (!confirm("Archive this component type? Components using this type will remain but the type won't be available for new registrations.")) {
+      return;
+    }
+    setDeletingSlug(slug);
+    try {
+      await componentTypesApi.archive(slug);
+      toast.success("Component type archived");
+      refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to archive");
+    } finally {
+      setDeletingSlug(null);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -62,6 +84,17 @@ export default function TypesPage() {
                         <Pencil className="h-4 w-4" />
                       </Button>
                     </Link>
+                    {!type.is_archived && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDelete(type.slug)}
+                        disabled={deletingSlug === type.slug}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

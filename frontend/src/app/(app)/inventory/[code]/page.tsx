@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { componentsApi } from "@/features/components/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/features/inventory/components/StatusBadge";
+import { Button } from "@/components/ui/button";
 import { buttonVariants } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
+import { toast } from "sonner";
 
 interface ComponentResponse {
   code: string
@@ -76,6 +79,22 @@ export default function ComponentDetailPage({ params }: Props) {
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isArchiving, setIsArchiving] = useState(false)
+
+  const handleArchive = async () => {
+    if (!confirm("This will decommission the component. This action cannot be undone. Continue?")) {
+      return
+    }
+    setIsArchiving(true)
+    try {
+      await componentsApi.archive(code)
+      toast.success("Component decommissioned")
+      router.push("/inventory")
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to archive component")
+      setIsArchiving(false)
+    }
+  }
 
   useEffect(() => {
     params.then(async (p) => {
@@ -160,6 +179,16 @@ export default function ComponentDetailPage({ params }: Props) {
               <Link href={`/inventory/${code}/edit`} className={buttonVariants()}>
                 Edit
               </Link>
+              {component.status !== "decommissioned" && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleArchive}
+                  disabled={isArchiving}
+                >
+                  {isArchiving ? "Archiving..." : "Decommission"}
+                </Button>
+              )}
             </div>
           </div>
 

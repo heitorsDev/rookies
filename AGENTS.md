@@ -52,13 +52,17 @@ Rookies is an internal team tool for registering, tracking, and diagnosing elect
 
 #### 2.1.1 Roles & Permissions
 
+> **STRICT REQUIREMENT**: All authenticated members (regardless of role) MUST be allowed to perform full CRUD operations on both **Components** and **Component Types**. There are no restrictions — any team member can create, read, update, and delete (archive) any component or component type. The only admin-only actions are member management operations listed below.
+
 | Action | `member` | `admin` |
 |---|---|---|
 | View inventory & components | ✅ | ✅ |
-| Register new components | ✅ | ✅ |
-| Update component data & status | ✅ | ✅ |
-| Create / edit Component Types | ✅ | ✅ |
-| Archive Component Types | ❌ | ✅ |
+| Create Components | ✅ | ✅ |
+| Update Component data, status, notes, attachments | ✅ | ✅ |
+| Delete/Archive Components | ✅ | ✅ |
+| Create Component Types | ✅ | ✅ |
+| Update Component Types | ✅ | ✅ |
+| Delete/Archive Component Types | ✅ | ✅ |
 | Create team member accounts | ❌ | ✅ |
 | Revoke / deactivate member accounts | ❌ | ✅ |
 | Generate new login tokens for members | ❌ | ✅ |
