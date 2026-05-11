@@ -373,6 +373,7 @@ export default function EditComponentPage({ params }: Props) {
   })
 
   const {
+    register,
     handleSubmit,
     setValue,
     watch,

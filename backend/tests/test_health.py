@@ -1,13 +1,15 @@
 import pytest
 
 
-def test_health_endpoint(api_client):
-    response = api_client.health()
-    assert response.status == 200
+@pytest.mark.asyncio
+async def test_health_endpoint(client):
+    response = await client.get("/api/v1/health")
+    assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "ok"
+    assert data == {"status": "ok"}
 
 
-def test_health_no_auth_required(api_client):
-    response = api_client.health()
-    assert response.status == 200
+@pytest.mark.asyncio
+async def test_health_no_auth_required(client):
+    response = await client.get("/api/v1/health")
+    assert response.status_code == 200

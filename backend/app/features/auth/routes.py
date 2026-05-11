@@ -45,6 +45,8 @@ async def login(body: LoginRequest, response: Response):
     )
 
     return {
+        "access_token": access_token,
+        "token_type": "bearer",
         "member": MemberOut.model_validate(member),
     }
 
