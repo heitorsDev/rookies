@@ -181,7 +181,7 @@ def list_members() -> list[Member]:
     return list(Member.objects().order_by("name"))
 
 
-def seed_first_admin(name: str, username: str) -> tuple[Member, str]:
+def seed_first_admin(name: str, username: str, password: str | None = None) -> tuple[Member, str]:
     if Member.objects.count() > 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -196,5 +196,11 @@ def seed_first_admin(name: str, username: str) -> tuple[Member, str]:
     )
     member.save()
 
-    raw_token = generate_token(member)
+    if password:
+        raw_token = None
+        member.password_hash = _hash_password(password)
+        member.is_activated = True
+        member.save()
+    else:
+        raw_token = generate_token(member)
     return member, raw_token

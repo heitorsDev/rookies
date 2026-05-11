@@ -11,6 +11,7 @@ export default function SetupPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [seedKey, setSeedKey] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,11 +50,14 @@ export default function SetupPage() {
     setIsSubmitting(true);
 
     try {
-      await authApi.seedAdmin({
-        name,
-        username: username.toLowerCase().replace(/[^a-z0-9]/g, ""),
-        password,
-      });
+      await authApi.seedAdmin(
+        {
+          name,
+          username: username.toLowerCase().replace(/[^a-z0-9]/g, ""),
+          password,
+        },
+        seedKey || undefined
+      );
       setSuccess(true);
       setTimeout(() => {
         router.push("/login");
@@ -161,7 +165,7 @@ export default function SetupPage() {
               />
             </div>
 
-            <div className="space-y-2">
+<div className="space-y-2">
               <label className="text-xs font-medium text-[#f9e8c9]">Confirm Password</label>
               <input
                 type="password"
@@ -173,7 +177,16 @@ export default function SetupPage() {
               />
             </div>
 
-            
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-[#f9e8c9]">Seed Key (optional)</label>
+              <input
+                type="password"
+                value={seedKey}
+                onChange={(e) => setSeedKey(e.target.value)}
+                placeholder="Enter seed key if configured"
+                className="w-full rounded-lg border border-white/10 bg-white/[0.05] px-4 py-2.5 text-sm text-[#f9e8c9] placeholder:text-[#98abee]/30 focus:border-[#98abee]/50 focus:outline-none focus:ring-1 focus:ring-[#98abee]/50"
+              />
+            </div>
 
             <Button
               type="submit"

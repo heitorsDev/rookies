@@ -21,12 +21,6 @@ export interface LoginResponse {
   member: MemberResponse;
 }
 
-export interface SeedAdminRequest {
-  name: string;
-  username: string;
-  password: string;
-}
-
 export interface ActivateRequest {
   username: string;
   token: string;
@@ -49,13 +43,22 @@ export interface TokenResponse {
   username: string;
 }
 
+export interface SeedAdminRequest {
+  name: string;
+  username: string;
+  password: string;
+}
+
 export const authApi = {
   login: (data: LoginRequest) => api.post<LoginResponse>("/auth/login", data),
   activate: (data: ActivateRequest) =>
     api.post<{ detail: string }>("/auth/activate", data),
   logout: () => api.post<{ detail: string }>("/auth/logout"),
-  seedAdmin: (data: SeedAdminRequest) =>
-    api.post<TokenResponse>("/auth/seed", data),
+  seedAdmin: (data: SeedAdminRequest, seedKey?: string) =>
+    api.post<TokenResponse>(
+      `/auth/seed${seedKey ? `?seed_key=${encodeURIComponent(seedKey)}` : ""}`,
+      data
+    ),
   createMember: (data: CreateMemberRequest) =>
     api.post<CreateMemberResponse>("/auth/members", data),
   listMembers: () => api.get<MemberResponse[]>("/auth/members"),
