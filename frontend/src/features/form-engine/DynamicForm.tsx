@@ -81,11 +81,11 @@ function buildSchema(fields: FieldDefinition[]) {
     if (field.required) {
       if (field.field_type === "multiselect") {
         schema = (schema as z.ZodArray<z.ZodString>).min(1, { message: "At least one option is required" })
-      } else {
+      } else if (field.field_type === "text" || field.field_type === "select" || field.field_type === "textarea" || field.field_type === "auto" || field.field_type === "date" || field.field_type === "file") {
         schema = (schema as z.ZodString).min(1, { message: `${field.label} is required` })
       }
     } else {
-      schema = schema.optional()
+      schema = z.optional(schema)
     }
 
     shape[field.field_id] = schema
