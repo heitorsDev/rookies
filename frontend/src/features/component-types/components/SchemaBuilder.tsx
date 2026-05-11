@@ -238,6 +238,7 @@ function SortableFieldCard({
                 }}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="Field display label"
+                autoComplete="off"
               />
             </div>
             <div>
@@ -250,6 +251,7 @@ function SortableFieldCard({
                 onChange={(e) => onUpdate({ field_id: e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "") })}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="field_id"
+                autoComplete="off"
               />
             </div>
           </div>
@@ -361,6 +363,7 @@ function SortableFieldCard({
                   onChange={(e) => onUpdate({ unit: e.target.value })}
                   className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="e.g., RPM, A"
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -418,6 +421,7 @@ function SortableFieldCard({
                 onChange={(e) => onUpdate({ auto_hint: e.target.value })}
                 className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
                 placeholder="e.g., Paste the firmware version from Phoenix Tuner X"
+                autoComplete="off"
               />
             </div>
           )}
@@ -432,6 +436,7 @@ function SortableFieldCard({
               onChange={(e) => onUpdate({ help_text: e.target.value })}
               className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
               placeholder="Optional helper text shown below the field"
+              autoComplete="off"
             />
           </div>
 
@@ -445,6 +450,7 @@ function SortableFieldCard({
               onChange={(e) => onUpdate({ placeholder: e.target.value })}
               className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
               placeholder="Optional placeholder text"
+              autoComplete="off"
             />
           </div>
         </div>
@@ -543,6 +549,7 @@ export function SchemaBuilder({
                   onChange={(e) => handleNameChange(e.target.value)}
                   className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   placeholder="e.g., Falcon 500 Motor"
+                  autoComplete="off"
                   required
                 />
               </div>
@@ -564,6 +571,7 @@ export function SchemaBuilder({
                     }
                     className="flex-1 px-3 py-2.5 text-sm font-mono bg-transparent focus:outline-none"
                     placeholder="falcon500"
+                    autoComplete="off"
                     required
                   />
                 </div>
@@ -580,6 +588,7 @@ export function SchemaBuilder({
                   onChange={(e) => setDescription(e.target.value)}
                   className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                   placeholder="Describe this component type..."
+                  autoComplete="off"
                   rows={3}
                 />
               </div>
@@ -734,6 +743,7 @@ export function SchemaBuilder({
                           className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm resize-none"
                           rows={3}
                           placeholder={field.placeholder}
+                          autoComplete="off"
                         />
                       )}
                       {field.field_type === "range" && (
@@ -795,6 +805,7 @@ export function SchemaBuilder({
                             }
                             className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm pr-12 focus:ring-2 focus:ring-primary/20 focus:border-primary"
                             placeholder={field.placeholder}
+                            autoComplete="off"
                           />
                           {field.unit && (
                             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
