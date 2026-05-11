@@ -559,7 +559,7 @@ export function SchemaBuilder({
                     value={slug}
                     onChange={(e) =>
                       setSlug(
-                        e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "")
+                        e.target.value.toLowerCase().replace(/[^a-z0-9]/g, "")
                       )
                     }
                     className="flex-1 px-3 py-2.5 text-sm font-mono bg-transparent focus:outline-none"
