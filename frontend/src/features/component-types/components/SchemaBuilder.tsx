@@ -107,6 +107,13 @@ function generateFieldId(label: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
+function generateSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 interface SortableFieldCardProps {
   field: FieldDefinition;
   index: number;
@@ -474,7 +481,7 @@ export function SchemaBuilder({
   const handleNameChange = (newName: string) => {
     setName(newName);
     if (!initialData?.slug) {
-      setSlug(generateFieldId(newName));
+      setSlug(generateSlug(newName));
     }
   };
 
