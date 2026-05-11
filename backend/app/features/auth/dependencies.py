@@ -1,16 +1,28 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.features.auth.models import Member
 from app.features.auth.service import decode_jwt, get_member_by_username
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_member(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    request: Request,
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> Member:
-    payload = decode_jwt(credentials.credentials)
+    token = credentials.credentials if credentials else None
+
+    if not token:
+        token = request.cookies.get("access_token")
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
+    payload = decode_jwt(token)
     username = payload.get("sub")
     if not username:
         raise HTTPException(

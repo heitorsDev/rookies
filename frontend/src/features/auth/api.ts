@@ -37,10 +37,16 @@ export interface CreateMemberResponse {
   token: string;
 }
 
+export interface TokenResponse {
+  token: string;
+  username: string;
+}
+
 export const authApi = {
-  login: (data: LoginRequest) => api.post<LoginResponse>("/auth/login", data),
+  login: (data: LoginRequest) => api.post<MemberResponse>("/auth/login", data),
   activate: (data: ActivateRequest) =>
     api.post<{ detail: string }>("/auth/activate", data),
+  logout: () => api.post<{ detail: string }>("/auth/logout"),
   createMember: (data: CreateMemberRequest) =>
     api.post<CreateMemberResponse>("/auth/members", data),
   listMembers: () => api.get<MemberResponse[]>("/auth/members"),

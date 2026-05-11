@@ -7,9 +7,8 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { api, getToken, setToken, clearToken } from "@/lib/api";
-import { toast } from "sonner";
 import { authApi } from "../api";
+import { toast } from "sonner";
 
 interface Member {
   name: string;
@@ -26,7 +25,7 @@ interface AuthState {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -45,20 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const checkAuth = useCallback(async () => {
-    const token = getToken();
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const user = await fetchCurrentMember();
       setMember(user);
-      if (!user) {
-        clearToken();
-      }
     } catch {
-      clearToken();
+      setMember(null);
     } finally {
       setIsLoading(false);
     }
@@ -69,17 +59,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [checkAuth]);
 
   const login = async (username: string, password: string) => {
-    const response = await api.post<{ access_token: string; member: Member }>("/auth/login", {
-      username,
-      password,
-    });
-    setToken(response.access_token);
-    setMember(response.member);
-    toast.success(`Welcome back, ${response.member.name}!`);
+    const response = await authApi.login({ username, password });
+    setMember(response);
+    toast.success(`Welcome back, ${response.name}!`);
   };
 
-  const logout = () => {
-    clearToken();
+  const logout = async () => {
+    await authApi.logout();
     setMember(null);
   };
 

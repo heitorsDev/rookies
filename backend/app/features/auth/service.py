@@ -38,13 +38,13 @@ def _create_jwt(member: Member) -> str:
         "iat": now,
         "exp": now + timedelta(minutes=settings.jwt_expire_minutes),
     }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return jwt.encode(payload, settings.jwt_secret_value, algorithm=settings.jwt_algorithm)
 
 
 def decode_jwt(token: str) -> dict:
     try:
         return jwt.decode(
-            token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+            token, settings.jwt_secret_value, algorithms=[settings.jwt_algorithm]
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(

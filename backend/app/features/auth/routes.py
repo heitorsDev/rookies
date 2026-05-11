@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.config import settings
 from app.features.auth import service
@@ -27,16 +27,27 @@ async def activate(body: ActivateRequest):
     return MessageResponse(detail="Account activated. You can now log in with your password.")
 
 
-@router.post("/login", response_model=LoginResponse)
-async def login(body: LoginRequest):
+@router.post("/login")
+async def login(body: LoginRequest, response: Response):
     access_token = await asyncio.to_thread(
         service.authenticate, body.username, body.password
     )
     member = await asyncio.to_thread(service.get_member_by_username, body.username)
-    return LoginResponse(
-        access_token=access_token,
-        member=MemberOut.model_validate(member),
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite=settings.cookie_samesite,
+        secure=settings.cookie_secure,
+        max_age=settings.jwt_expire_minutes * 60,
     )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "member": MemberOut.model_validate(member),
+    }
 
 
 @router.post("/members", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -81,6 +92,17 @@ async def generate_login_token(
     member = await asyncio.to_thread(service.get_member_by_username, username)
     raw_token = await asyncio.to_thread(service.generate_token, member)
     return TokenResponse(token=raw_token, username=member.username)
+
+
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite=settings.cookie_samesite,
+        secure=settings.cookie_secure,
+    )
+    return {"detail": "Logged out successfully"}
 
 
 @router.post("/seed", response_model=TokenResponse)

@@ -4,15 +4,13 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { authApi, type LoginRequest, type ActivateRequest } from "../api";
-import { setToken, clearToken } from "@/lib/api";
 
 export function useLogin() {
   const router = useRouter();
 
   return useMutation({
     mutationFn: (data: LoginRequest) => authApi.login(data),
-    onSuccess: (res) => {
-      setToken(res.access_token);
+    onSuccess: () => {
       router.push("/inventory");
     },
     onError: () => {
@@ -39,8 +37,13 @@ export function useActivate() {
 export function useLogout() {
   const router = useRouter();
 
-  return () => {
-    clearToken();
-    router.push("/login");
-  };
+  return useMutation({
+    mutationFn: () => authApi.logout(),
+    onSuccess: () => {
+      router.push("/login");
+    },
+    onError: () => {
+      router.push("/login");
+    },
+  });
 }
