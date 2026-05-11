@@ -1,5 +1,19 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+---
+
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [`backend/ROUTES.md`](../backend/ROUTES.md) | Complete backend API route specifications |
+| [nextjs-frontend skill](../.opencode/skills/nextjs-frontend/SKILL.md) | Next.js frontend conventions and patterns |
+| [next-best-practices skill](../.agents/skills/next-best-practices/SKILL.md) | Next.js App Router patterns |
+| [frontend-design skill](../.agents/skills/frontend-design/SKILL.md) | UI design guidance |
+
+---
+
 ## Getting Started
 
 First, run the development server:

@@ -538,3 +538,15 @@ async def test_create_user(client):
     assert data["email"] == "test@example.com"
     assert "id" in data
 ```
+
+---
+
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../../../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [`backend/ROUTES.md`](../../../backend/ROUTES.md) | Complete backend API route specifications |
+| [python-fastapi skill](../../../.opencode/skills/python-fastapi/SKILL.md) | FastAPI development conventions and patterns |
+| [mongodb-odm skill](../../../.opencode/skills/mongodb-odm/SKILL.md) | MongoEngine ODM patterns for Python |
+| [mongodb skill](../mongodb/SKILL.md) | General MongoDB best practices |

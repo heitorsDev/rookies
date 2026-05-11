@@ -12,7 +12,7 @@ export function useCreateMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { name: string; username: string }) =>
+    mutationFn: (data: { name: string; username: string; role?: "member" | "admin" }) =>
       membersApi.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["members"] });

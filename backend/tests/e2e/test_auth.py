@@ -13,8 +13,7 @@ async def test_health_check(client: AsyncClient):
 async def test_seed_first_admin(client: AsyncClient):
     response = await client.post(
         "/api/v1/auth/seed",
-        params={"seed_key": "test-seed-key"},
-        json={"name": "Admin User", "username": "admin"},
+        json={"name": "Admin User", "username": "admin", "seed_key": "test-seed-key"},
     )
     assert response.status_code == 200
     data = response.json()
@@ -26,8 +25,7 @@ async def test_seed_first_admin(client: AsyncClient):
 async def test_seed_fails_with_invalid_key(client: AsyncClient):
     response = await client.post(
         "/api/v1/auth/seed",
-        params={"seed_key": "wrong-key"},
-        json={"name": "Admin", "username": "admin"},
+        json={"name": "Admin", "username": "admin", "seed_key": "wrong-key"},
     )
     assert response.status_code == 403
 
@@ -36,8 +34,7 @@ async def test_seed_fails_with_invalid_key(client: AsyncClient):
 async def test_seed_fails_when_members_exist(client: AsyncClient, admin_token: str):
     response = await client.post(
         "/api/v1/auth/seed",
-        params={"seed_key": "test-seed-key"},
-        json={"name": "Another Admin", "username": "anotheradmin"},
+        json={"name": "Another Admin", "username": "anotheradmin", "seed_key": "test-seed-key"},
     )
     assert response.status_code == 400
 
@@ -46,8 +43,7 @@ async def test_seed_fails_when_members_exist(client: AsyncClient, admin_token: s
 async def test_activate_account(client: AsyncClient):
     seed_response = await client.post(
         "/api/v1/auth/seed",
-        params={"seed_key": "test-seed-key"},
-        json={"name": "New User", "username": "newuser"},
+        json={"name": "New User", "username": "newuser", "seed_key": "test-seed-key"},
     )
     token = seed_response.json()["token"]
 
@@ -63,8 +59,7 @@ async def test_activate_account(client: AsyncClient):
 async def test_activate_with_invalid_token(client: AsyncClient):
     await client.post(
         "/api/v1/auth/seed",
-        params={"seed_key": "test-seed-key"},
-        json={"name": "User", "username": "user1"},
+        json={"name": "User", "username": "user1", "seed_key": "test-seed-key"},
     )
 
     response = await client.post(

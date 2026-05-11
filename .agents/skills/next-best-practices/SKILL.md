@@ -151,3 +151,15 @@ See [debug-tricks.md](./debug-tricks.md) for:
 - MCP endpoint for AI-assisted debugging
 - Rebuild specific routes with `--debug-build-paths`
 
+---
+
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../../../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [`backend/ROUTES.md`](../../../backend/ROUTES.md) | Complete backend API route specifications |
+| [`frontend/README.md`](../../../frontend/README.md) | Next.js project setup and basics |
+| [nextjs-frontend skill](../../../.opencode/skills/nextjs-frontend/SKILL.md) | Next.js frontend conventions and patterns |
+| [frontend-design skill](../frontend-design/SKILL.md) | UI design guidance |
+

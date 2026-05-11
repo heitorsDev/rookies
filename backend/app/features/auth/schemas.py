@@ -51,3 +51,4 @@ class SeedAdminRequest(BaseModel):
     name: str
     username: str
     password: str
+    seed_key: str | None = None

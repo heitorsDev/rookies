@@ -47,6 +47,7 @@ export interface SeedAdminRequest {
   name: string;
   username: string;
   password: string;
+  seed_key?: string;
 }
 
 export const authApi = {
@@ -54,11 +55,8 @@ export const authApi = {
   activate: (data: ActivateRequest) =>
     api.post<{ detail: string }>("/auth/activate", data),
   logout: () => api.post<{ detail: string }>("/auth/logout"),
-  seedAdmin: (data: SeedAdminRequest, seedKey?: string) =>
-    api.post<TokenResponse>(
-      `/auth/seed${seedKey ? `?seed_key=${encodeURIComponent(seedKey)}` : ""}`,
-      data
-    ),
+  seedAdmin: (data: SeedAdminRequest) =>
+    api.post<TokenResponse>("/auth/seed", data),
   createMember: (data: CreateMemberRequest) =>
     api.post<CreateMemberResponse>("/auth/members", data),
   listMembers: () => api.get<MemberResponse[]>("/auth/members"),

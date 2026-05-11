@@ -18,5 +18,14 @@ compatibility: opencode
 - Store all timestamps as UTC via `datetime.utcnow()`
 - Embedded documents for history, attachments, loan_info
 
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [`backend/ROUTES.md`](../../backend/ROUTES.md) | Complete backend API route specifications |
+| [mongodb skill](../../.agents/skills/mongodb/SKILL.md) | General MongoDB best practices and patterns |
+| [python-fastapi skill](../python-fastapi/SKILL.md) | FastAPI backend development conventions |
+
 ## When to load me
 Load this skill when designing or modifying database schemas, writing queries, or implementing atomic operations.

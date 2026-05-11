@@ -73,6 +73,7 @@ function formatFieldValue(value: unknown, fieldType: string): string {
 }
 
 export default function ComponentDetailPage({ params }: Props) {
+  const router = useRouter();
   const [code, setCode] = useState("")
   const [component, setComponent] = useState<ComponentResponse | null>(null)
   const [componentType, setComponentType] = useState<ComponentTypeResponse | null>(null)
