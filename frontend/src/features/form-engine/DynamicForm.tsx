@@ -32,10 +32,10 @@ function buildSchema(fields: FieldDefinition[]) {
     switch (field.field_type) {
       case "number": {
         let numberSchema: z.ZodNumber = z.coerce.number()
-        if (field.min_value !== undefined) {
+        if (field.min_value !== undefined && typeof field.min_value === "number") {
           numberSchema = numberSchema.min(field.min_value, { message: `Minimum value is ${field.min_value}` })
         }
-        if (field.max_value !== undefined) {
+        if (field.max_value !== undefined && typeof field.max_value === "number") {
           numberSchema = numberSchema.max(field.max_value, { message: `Maximum value is ${field.max_value}` })
         }
         schema = numberSchema
@@ -56,10 +56,10 @@ function buildSchema(fields: FieldDefinition[]) {
 
       case "range": {
         let rangeSchema: z.ZodNumber = z.number()
-        if (field.min_value !== undefined) {
+        if (field.min_value !== undefined && typeof field.min_value === "number") {
           rangeSchema = rangeSchema.min(field.min_value)
         }
-        if (field.max_value !== undefined) {
+        if (field.max_value !== undefined && typeof field.max_value === "number") {
           rangeSchema = rangeSchema.max(field.max_value)
         }
         schema = rangeSchema
