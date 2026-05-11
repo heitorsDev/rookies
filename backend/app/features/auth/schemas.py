@@ -45,3 +45,9 @@ class TokenResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     detail: str
+
+
+class SeedAdminRequest(BaseModel):
+    name: str
+    username: str
+    password: str
