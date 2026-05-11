@@ -1,9 +1,10 @@
 import re
 from datetime import datetime
 
-from pydantic import BaseModel, field_validator
+from bson import ObjectId
+from pydantic import BaseModel, field_validator, model_validator
 
-SLUG_REGEX = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
+SLUG_REGEX = re.compile(r"^[a-z0-9]+$")
 
 ALLOWED_FIELD_TYPES = {
     "text",
@@ -43,12 +44,17 @@ class FieldDefinitionIn(BaseModel):
             )
         return v
 
+    @field_validator("field_id")
+    @classmethod
+    def validate_field_id(cls, v: str) -> str:
+        if not v.replace("_", "").replace("-", "").isalnum():
+            raise ValueError("field_id must be alphanumeric only (no special characters)")
+        return v
+
     @field_validator("options")
     @classmethod
     def validate_options(cls, v: list[str] | None, info) -> list[str] | None:
-        if v is not None and not v:
-            raise ValueError("options must be a non-empty list when provided")
-        return v
+        return v or None
 
 
 class FieldDefinitionOut(FieldDefinitionIn):
@@ -67,7 +73,7 @@ class ComponentTypeCreate(BaseModel):
         v = v.lower().strip()
         if not SLUG_REGEX.match(v):
             raise ValueError(
-                "Slug must be lowercase alphanumeric with hyphens (e.g. 'falcon-500')"
+                "Slug must be lowercase alphanumeric only (e.g. 'falcon500')"
             )
         return v
 
@@ -107,3 +113,10 @@ class ComponentTypeOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def convert_objectid(cls, data):
+        if hasattr(data, "id") and isinstance(data.id, ObjectId):
+            data.id = str(data.id)
+        return data

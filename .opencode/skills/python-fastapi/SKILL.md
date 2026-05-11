@@ -20,5 +20,15 @@ compatibility: opencode
 - Use `datetime.utcnow()` for timestamps; store as UTC
 - History logging is automatic via JWT payload — do not accept member name from user input
 
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [`backend/ROUTES.md`](../../backend/ROUTES.md) | Complete backend API route specifications |
+| [mongodb-odm skill](../mongodb-odm/SKILL.md) | MongoEngine ODM patterns and conventions |
+| [mongodb skill](../../.agents/skills/mongodb/SKILL.md) | General MongoDB best practices |
+| [fastapi-templates skill](../../.agents/skills/fastapi-templates/SKILL.md) | FastAPI project templates |
+
 ## When to load me
 Load this skill when adding or modifying backend API routes, database models, business logic, or validation schemas.

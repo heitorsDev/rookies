@@ -15,8 +15,6 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
     member: "MemberOut"
 
 
@@ -45,3 +43,10 @@ class TokenResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     detail: str
+
+
+class SeedAdminRequest(BaseModel):
+    name: str
+    username: str
+    password: str
+    seed_key: str | None = None

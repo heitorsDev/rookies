@@ -1,4 +1,4 @@
-# Rookies — Technical Specification & Business Rules
+﻿# Rookies — Technical Specification & Business Rules
 
 > **Purpose**: This document defines the business rules, architecture decisions, data models, API contracts, and development guidelines for the Rookies project. It is intended to be used as the single source of truth for all development work on this project.
 
@@ -19,7 +19,10 @@
 11. [Component Lifecycle & Status](#11-component-lifecycle--status)
 12. [Suggested Enhancements](#12-suggested-enhancements)
 13. [Development Guidelines](#13-development-guidelines)
-14. [Environment & Deployment](#14-environment--deployment)
+14. [Local Development Setup](#14-local-development-setup)
+15. [Environment & Deployment](#15-environment--deployment)
+16. [Design System & Color Palette](#16-design-system--color-palette)
+17. [End-to-End API Testing](#17-end-to-end-api-testing)
 
 ---
 
@@ -49,19 +52,24 @@ Rookies is an internal team tool for registering, tracking, and diagnosing elect
 
 #### 2.1.1 Roles & Permissions
 
+> **STRICT REQUIREMENT**: All authenticated members (regardless of role) MUST be allowed to perform full CRUD operations on both **Components** and **Component Types**. There are no restrictions — any team member can create, read, update, and delete (archive) any component or component type. The only admin-only actions are member management operations listed below.
+
 | Action | `member` | `admin` |
 |---|---|---|
 | View inventory & components | ✅ | ✅ |
-| Register new components | ✅ | ✅ |
-| Update component data & status | ✅ | ✅ |
-| Create / edit Component Types | ✅ | ✅ |
-| Archive Component Types | ❌ | ✅ |
+| Create Components | ✅ | ✅ |
+| Update Component data, status, notes, attachments | ✅ | ✅ |
+| Delete/Archive Components | ✅ | ✅ |
+| Create Component Types | ✅ | ✅ |
+| Update Component Types | ✅ | ✅ |
+| Delete/Archive Component Types | ✅ | ✅ |
 | Create team member accounts | ❌ | ✅ |
+| Create team member accounts with admin role | ❌ | ✅ |
 | Revoke / deactivate member accounts | ❌ | ✅ |
 | Generate new login tokens for members | ❌ | ✅ |
 | View all member accounts | ❌ | ✅ |
 
-- The first account in Rookies is **automatically assigned the `admin` role** (bootstrapped via a CLI command or an env-variable-protected seed endpoint). All subsequent accounts default to `member` unless explicitly promoted.
+- Accounts created via the seed endpoint are **assigned the `admin` role**. Accounts created via the admin UI default to `member` unless explicitly promoted.
 - An admin cannot demote themselves if they are the only admin in Rookies.
 
 ### 2.2 Component Types (Schemas)
@@ -274,6 +282,7 @@ class Member(Document):
     username     = StringField(required=True, unique=True)  # Login handle, e.g. "joaosilva"
     role         = StringField(required=True, choices=['member', 'admin'], default='member')
     is_active    = BooleanField(default=True)           # False = account revoked
+    is_activated = BooleanField(default=False)        # False = password not yet set
     login_token_hash = StringField()                    # bcrypt hash of the one-time activation token
     token_issued_at  = DateTimeField()                  # when the current token was generated
     password_hash    = StringField()                    # bcrypt hash of the member's chosen password
@@ -428,6 +437,8 @@ Provides the team overview of all components.
 
 ## 7. API Contract
 
+> **Note**: For the most up-to-date and detailed API specifications (including request/response schemas, query parameters, and validation rules), always refer to `backend/ROUTES.md`.
+
 ### Base URL
 ```
 /api/v1
@@ -561,7 +572,7 @@ Provides the team overview of all components.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `POST` | `/auth/seed` | Seed key (query) | Bootstrap the first admin account |
+| `POST` | `/auth/seed` | Seed key (query) | Create an admin account |
 | `POST` | `/auth/members` | Admin JWT | Create a new member and return a one-time activation token |
 | `POST` | `/auth/tokens` | Admin JWT | Generate a new activation token for a member |
 | `POST` | `/auth/activate` | None | Activate an account using the one-time token and set a password |
@@ -592,11 +603,11 @@ Provides the team overview of all components.
 }
 ```
 
+> **IMPORTANT**: The access token is returned ONLY via an `HttpOnly` cookie named `access_token`. It is **NOT** included in the JSON response body.
+
 **POST `/auth/login` response:**
 ```json
 {
-  "access_token": "<jwt>",
-  "token_type": "bearer",
   "member": {
     "name": "João Silva",
     "username": "joaosilva",
@@ -609,6 +620,13 @@ Provides the team overview of all components.
 }
 ```
 
+The `access_token` cookie is automatically set by the backend with the following attributes:
+- `HttpOnly: true` - Prevents JavaScript access
+- `SameSite: Strict` - Prevents CSRF attacks
+- `Secure: true` (production only)
+- `Max-Age: 86400` (24 hours)
+- `Path: /`
+
 ---
 
 ## 8. Frontend Structure
@@ -617,7 +635,8 @@ Provides the team overview of all components.
 
 | Route | Description |
 |---|---|
-| `/` | Redirect to `/inventory` |
+| `/setup` | Setup — create admin accounts |
+| `/` | Landing page — documentation-style guide explaining how the system works and how to use it. No technical jargon; plain language for all team members. |
 | `/activate` | Activate account using one-time token and set password |
 | `/login` | Login with username and password |
 | `/inventory` | Component inventory list with filters |
@@ -629,13 +648,34 @@ Provides the team overview of all components.
 | `/types/new` | Create a new component type (schema builder) |
 | `/types/[slug]` | View a component type's schema |
 | `/types/[slug]/edit` | Edit a component type's schema |
+| `/members` | Team member management (admin only) — create members with role selection |
 
 ### Key Frontend Features
 
+- **Sidebar Navigation**: Fixed left sidebar with navigation links to all main sections:
+  - `/inventory` - Component inventory list
+  - `/register` - Register new components
+  - `/types` - View and manage existing component types
+  - `/types/new` - Schema builder (accessible directly from sidebar, no type creation required)
+  - `/members` - Team member management (admin only)
+  - User profile display with logout button
+  - Role-based visibility (admin items shown only to admins)
 - **Inventory page**: Card or table view, filter bar (status chips, type dropdown, search input), pagination, click to open detail.
 - **Component detail page**: Displays all diagnostic data fields with their labels and units, current status with a change dropdown, notes, history timeline, and attachment viewer.
 - **Dynamic form**: Rendered by the `DynamicForm` component based on the schema fetched from the selected component type. See [Section 9](#9-dynamic-form-engine).
-- **Schema builder** (`/types/new`, `/types/[slug]/edit`): A drag-and-drop field editor allowing the team to add, reorder, and configure field definitions visually without writing code.
+- **Schema builder** (`/types/new`, `/types/[slug]/edit`): A drag-and-drop field editor allowing the team to add, reorder, and configure field definitions visually without writing code. The `/types/new` route must be accessible at any time via the sidebar — users should not need an existing component type to start building a schema.
+
+### Sidebar Implementation
+
+The sidebar is implemented in `frontend/src/components/Sidebar.tsx` and integrated into `frontend/src/app/(app)/layout.tsx`. It uses CSS custom properties defined in `frontend/src/app/globals.css` with the following theme tokens:
+
+| CSS Variable | Light Mode | Dark Mode |
+|---|---|---|
+| `--sidebar` | `#201658` | `#16113e` |
+| `--sidebar-foreground` | `#f9e8c9` | `#f9e8c9` |
+| `--sidebar-accent` | `#2a1f6b` | `#2a1f6b` |
+| `--sidebar-accent-foreground` | `#98abee` | `#98abee` |
+| `--sidebar-ring` | `#98abee` | `#98abee` |
 
 ---
 
@@ -740,6 +780,7 @@ Replace Base64 attachment storage with Cloudinary (free tier: 25 GB storage, 25 
 
 ### 12.1 Backend
 
+- **Always activate the virtual environment** before running Python commands. Run `.\venv\Scripts\Activate` (Windows) or `source venv/bin/activate` (macOS/Linux) first (ON THE BACKEND FOLDER). This avoids the "Defaulting to user installation because normal site-packages is not writeable" error and ensures packages are installed in the correct environment.
 - Use `async` FastAPI route handlers throughout.
 - MongoEngine operates synchronously; use `asyncio.to_thread()` to wrap blocking ODM calls in async routes to avoid blocking the event loop.
 - All service functions must raise typed `HTTPException`s with clear `detail` messages rather than returning error dicts.
@@ -787,9 +828,288 @@ sequence = counter.value
 - Frontend: `vitest` + `@testing-library/react` for component tests.
 - At minimum, test: code generation logic, field validation in dynamic forms, and status transition enforcement.
 
+### 12.6 Cookie-Based Token Storage (STRICT REQUIREMENTS)
+
+All authentication tokens **MUST** be stored and accessed exclusively via HTTP-only cookies. LocalStorage, sessionStorage, or any client-side JavaScript access is **FORBIDDEN** for token storage.
+
+#### 12.6.1 Backend Cookie Configuration
+
+All cookie setting must follow these strict rules:
+
+| Cookie Attribute | Value | Required Reason |
+|---|---|---|
+| `name` | `access_token` | Fixed cookie name for consistency |
+| `httponly` | `True` | **MANDATORY** - Prevents XSS token theft |
+| `samesite` | `Strict` | Prevents CSRF attacks from cross-site requests |
+| `secure` | `True` (production) / `False` (dev) | Encrypts cookie in transit |
+| `max_age` | `86400` (24 hours) | Token expiration in seconds |
+| `path` | `/` | Available on all routes |
+| `domain` | Not set | Defaults to current domain only |
+
+**Example (FastAPI/Python):**
+```python
+from fastapi import Response
+from datetime import timedelta
+
+response.set_cookie(
+    key="access_token",
+    value=token,
+    httponly=True,
+    samesite="Strict",
+    secure=not is_development,  # True in production
+    max_age=86400,  # 24 hours
+    path="/"
+)
+```
+
+#### 12.6.2 Backend Token Extraction
+
+The backend **MUST** extract the token from the cookie, NOT from the `Authorization` header. All protected routes must use cookie-based authentication:
+
+```python
+from fastapi import Cookie, Depends, HTTPException
+
+async def get_current_member(access_token: str = Cookie(None)):
+    if not access_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    # Verify token and return member...
+```
+
+**All protected endpoints must:**
+1. Extract token from `access_token` cookie
+2. Validate token signature and expiration
+3. Reject requests without valid cookie (return 401)
+4. Never accept tokens from `Authorization` header
+
+#### 12.6.3 Frontend Cookie Access (RESTRICTED)
+
+**STRICTLY FORBIDDEN:**
+- Reading `document.cookie` in JavaScript
+- Storing tokens in localStorage or sessionStorage
+- Accessing cookie value via any JS variable
+
+**ALLOWED (Server Components Only):**
+```typescript
+// Next.js Server Component - allowed
+import { cookies } from 'next/headers';
+
+async function getAuth() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('access_token')?.value;
+  // Server-side token verification...
+}
+```
+
+**ALLOWED (Server Actions):**
+```typescript
+'use server'
+import { cookies } from 'next/headers';
+
+export async function serverAction() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('access_token')?.value;
+  // Use token for server-side API calls...
+}
+```
+
+#### 12.6.4 Frontend API Calls (Server-Side Only)
+
+All API calls that require authentication **MUST** be made from the server (Server Components or Server Actions), never from client-side `useEffect` or event handlers:
+
+```typescript
+// CORRECT - Server Component fetches with credentials
+async function Page() {
+  const cookieStore = await cookies();
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/inventory`, {
+    headers: {
+      'Cookie': `access_token=${cookieStore.get('access_token')?.value}`
+    }
+  });
+}
+
+// CORRECT - Server Action makes authenticated request
+'use server'
+async function createComponent(formData: FormData) {
+  const cookieStore = await cookies();
+  await fetch('/api/v1/components', {
+    method: 'POST',
+    headers: {
+      'Cookie': `access_token=${cookieStore.get('access_token')?.value}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({...})
+  });
+}
+```
+
+**FORBIDDEN on Client:**
+```typescript
+// NEVER DO THIS
+const token = localStorage.getItem('token'); // FORBIDDEN
+const response = await fetch(url, { headers: { Authorization: `Bearer ${token}` }}); // FORBIDDEN
+```
+
+#### 12.6.5 Login Flow with Cookies
+
+The login flow **MUST** return the token exclusively in the cookie, NOT in the JSON body:
+
+```python
+# CORRECT - Backend login response
+@router.post("/auth/login")
+async def login(response: Response, credentials: LoginSchema):
+    # ... validate credentials ...
+    token = create_access_token(...)
+    
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        samesite="Strict",
+        secure=not is_dev,
+        max_age=86400,
+        path="/"
+    )
+    
+    # Token NOT included in JSON response
+    return {"member": {...}}  # No access_token field
+```
+
+```typescript
+// CORRECT - Frontend login handler (Client Component)
+'use client'
+import { useRouter } from 'next/navigation';
+
+export function LoginForm() {
+  const router = useRouter();
+  
+  async function onSubmit(data: LoginData) {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',  // Critical: sends/receives cookies
+      body: JSON.stringify(data)
+    });
+    
+    if (response.ok) {
+      router.push('/inventory');  // Redirect after successful cookie set
+    }
+  }
+}
+```
+
+**CRITICAL:** The `credentials: 'include'` fetch option is required to enable cookie transmission.
+
+#### 12.6.6 Logout Flow
+
+Logout **MUST** clear the cookie, not just redirect:
+
+```python
+# Backend logout
+@router.post("/auth/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+        samesite="Strict",
+        secure=not is_dev
+    )
+    return {"detail": "Logged out"}
+```
+
+```typescript
+// Frontend logout (Server Action)
+'use server'
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+
+export async function logout() {
+  const cookieStore = await cookies();
+  cookieStore.delete('access_token');
+  
+  await fetch(`${API_URL}/auth/logout`, { 
+    method: 'POST',
+    credentials: 'include'
+  });
+  
+  redirect('/login');
+}
+```
+
+#### 12.6.7 Cookie Security Checklist
+
+| Rule | Enforcement |
+|---|---|
+| Token stored in `HttpOnly` cookie | **MANDATORY** - No JS access |
+| `SameSite=Strict` set | **MANDATORY** - CSRF protection |
+| `Secure` flag in production | **MANDATORY** - HTTPS only |
+| No token in JSON response body | **MANDATORY** - Cookie-only delivery |
+| No localStorage/sessionStorage | **FORBIDDEN** - XSS vulnerable |
+| Server-side API calls only | **MANDATORY** - No client-side auth headers |
+| `credentials: 'include'` on fetch | **MANDATORY** - Cookie transmission |
+
 ---
 
-## 13. Environment & Deployment
+## 13. Local Development Setup
+
+### 13.1 Backend
+
+1. Navigate to the backend directory:
+   ```
+   cd backend
+   ```
+
+2. Activate the virtual environment:
+   ```powershell
+   # Windows
+   .\.venv\Scripts\Activate
+
+   # macOS/Linux
+   source .venv/bin/activate
+   ```
+
+3. Install dependencies:
+   ```powershell
+   pip install -r requirements.txt
+   ```
+
+4. Copy `.env.example` to `.env` and configure:
+   ```
+   MONGODB_URI=mongodb://localhost:27017/rookies
+   FRONTEND_ORIGIN=http://localhost:3000
+   JWT_SECRET=change-me-to-a-random-secret
+   SEED_KEY=dev-seed-key-123
+   ```
+
+5. Ensure MongoDB is running locally (or update `MONGODB_URI` to point to your MongoDB Atlas instance).
+
+6. Run the backend server:
+   ```powershell
+   uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+7. Access the API at `http://localhost:8000`. The interactive docs are at `http://localhost:8000/docs`.
+
+9. **Create an admin account**:
+   - Visit `http://localhost:3000/setup` in your browser
+   - Enter your name, username, and set a password
+   - This creates an admin account
+
+### 13.2 CLI Commands
+
+The backend includes a CLI for admin tasks. Run from the `backend/` directory with the venv activated:
+
+```powershell
+# Activate venv first, then:
+python -m app.cli --help
+```
+
+Available commands:
+- `python -m app.cli seed-admin` — Bootstrap the first admin account
+- `python -m app.cli list-members` — List all registered members
+
+---
+
+## 14. Environment & Deployment
 
 ### Backend `.env.example`
 
@@ -814,4 +1134,772 @@ NEXT_PUBLIC_API_URL=https://your-backend.onrender.com/api/v1
 
 ---
 
-*Document version: 1.0 — Generated for the Rookies project.*
+## 16. Design System & Color Palette
+
+### 15.1 Color Palette
+
+The Rookies frontend uses a fixed color palette sourced from [Colorhunt](https://colorhunt.co/palette/2016581d24ca98abeef9e8c9):
+
+| Hex | Role (Light) | Role (Dark) |
+|---|---|---|
+| `#201658` | Foreground text, sidebar background | Background |
+| `#1D24CA` | Primary (buttons, links, rings) | Secondary/accent |
+| `#98ABEE` | Secondary, accent, chart-2 | Primary, sidebar ring |
+| `#F9E8C9` | — (sidebar text, chart-4) | Foreground text |
+
+CSS custom properties are defined in `frontend/src/app/globals.css` under `:root` (light) and `.dark` (dark) selectors. All shadcn/ui variables are mapped to this palette.
+
+### 15.2 Theme Tokens
+
+- **Light mode**: Cream-tinted background (`#faf7f2`), deep navy text (`#201658`), vibrant blue primary (`#1D24CA`), dark sidebar (`#201658`).
+- **Dark mode**: Deep navy background (`#201658`), cream text (`#f9e8c9`), soft blue primary (`#98ABEE`).
+- **Fonts**: Geist (sans) and Geist Mono from `next/font/google`.
+- **Border radius**: `0.5rem` base with scaled variants (`sm`→`0.3rem` to `4xl`→`1.3rem`).
+- **Destructive**: `#e53e3e` (light), `#fc6b6b` (dark).
+
+---
+
+## 17. End-to-End API Testing
+
+End-to-end (E2E) API tests validate the complete request-response cycle against the live backend. These tests run against a test database and cover authentication, CRUD operations, validation, and error handling.
+
+### 17.1 Project Structure
+
+```
+backend/
+├── tests/
+│   ├── conftest.py              # pytest fixtures and test DB setup
+│   ├── e2e/
+│   │   ├── __init__.py
+│   │   ├── test_auth.py         # Seed, login, activate, member creation
+│   │   ├── test_component_types.py
+│   │   ├── test_components.py   # Registration, code generation, updates
+│   │   └── test_inventory.py    # List, filter, pagination, search
+│   └── unit/
+│       └── ...                  # Service-layer unit tests (optional)
+├── requirements.txt
+└── .env.test                   # Test environment variables
+```
+
+### 17.2 Dependencies
+
+Add to `backend/requirements.txt`:
+
+```
+pytest
+pytest-asyncio
+httpx                      # Async HTTP client for pytest-asyncio
+playwright                 # API client (optional, see 17.7)
+mongomock
+python-dotenv
+bcrypt
+PyJWT
+```
+
+Install:
+```powershell
+pip install pytest pytest-asyncio httpx playwright mongomock python-dotenv bcrypt PyJWT
+playwright install
+```
+
+### 17.3 Test Environment Configuration
+
+Create `backend/.env.test`:
+
+```
+MONGODB_URI=mongodb://localhost:27017/rookies_test
+FRONTEND_ORIGIN=http://localhost:3000
+JWT_SECRET=test-secret-for-e2e
+SEED_KEY=test-seed-key
+```
+
+### 17.4 Test Database Setup
+
+Create `backend/tests/conftest.py`:
+
+```python
+import os
+import pytest
+import mongomock
+from mongoengine import connect, disconnect
+from dotenv import load_dotenv
+
+os.environ.setdefault("ENV_FILE", ".env.test")
+load_dotenv(".env.test")
+
+
+@pytest.fixture(scope="function")
+def test_db():
+    connect(
+        "rookies_test",
+        mongo_client_class=mongomock.MongoClient,
+        alias="test"
+    )
+    yield
+    disconnect(alias="test")
+
+
+@pytest.fixture(scope="function")
+def client(test_db):
+    from httpx import ASGITransport, AsyncClient
+    from app.main import app
+
+    transport = ASGITransport(app=app)
+    return AsyncClient(transport=transport, base_url="http://test")
+
+
+@pytest.fixture(scope="function")
+async def admin_token(client: AsyncClient):
+    from app.features.auth.service import create_member, generate_token
+    from datetime import datetime
+
+    await create_member(
+        name="Admin User",
+        username="admin",
+        role="admin",
+        created_by="system"
+    )
+    token = await generate_token("admin")
+
+    response = await client.post(
+        "/api/v1/auth/activate",
+        json={
+            "username": "admin",
+            "token": token,
+            "password": "AdminPass123!"
+        }
+    )
+    assert response.status_code == 200
+
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "admin", "password": "AdminPass123!"}
+    )
+    return login_response.json()["access_token"]
+
+
+@pytest.fixture(scope="function")
+async def member_token(client: AsyncClient, admin_token: str):
+    from app.features.auth.service import create_member, generate_token
+
+    await create_member(
+        name="Member User",
+        username="member",
+        role="member",
+        created_by="admin"
+    )
+    token = await generate_token("member")
+
+    await client.post(
+        "/api/v1/auth/activate",
+        json={"username": "member", "token": token, "password": "MemberPass123!"}
+    )
+
+    login_response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "member", "password": "MemberPass123!"}
+    )
+    return login_response.json()["access_token"]
+
+
+@pytest.fixture
+def auth_headers(admin_token: str):
+    return {"Authorization": f"Bearer {admin_token}"}
+
+
+@pytest.fixture
+def member_headers(member_token: str):
+    return {"Authorization": f"Bearer {member_token}"}
+```
+
+### 17.5 Writing E2E Tests
+
+#### Health Check
+
+```python
+import pytest
+from httpx import AsyncClient
+
+
+@pytest.mark.asyncio
+async def test_health_check(client: AsyncClient):
+    response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+```
+
+#### Auth Flow
+
+```python
+import pytest
+from httpx import AsyncClient
+
+
+@pytest.mark.asyncio
+async def test_seed_first_admin(client: AsyncClient, test_db):
+    from app.features.auth.service import get_member_by_username
+    from datetime import datetime
+
+    response = await client.post(
+        "/api/v1/auth/seed",
+        params={"key": "test-seed-key"}
+    )
+    assert response.status_code == 200
+    assert response.json()["username"] == "admin"
+
+    member = await get_member_by_username("admin")
+    assert member.role == "admin"
+    assert member.is_active is True
+
+
+@pytest.mark.asyncio
+async def test_login_success(client: AsyncClient, admin_token: str):
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "admin", "password": "AdminPass123!"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+    assert data["member"]["username"] == "admin"
+
+
+@pytest.mark.asyncio
+async def test_login_invalid_credentials(client: AsyncClient):
+    response = await client.post(
+        "/api/v1/auth/login",
+        json={"username": "admin", "password": "wrongpassword"}
+    )
+    assert response.status_code == 401
+    assert "Invalid credentials" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_protected_route_without_token(client: AsyncClient):
+    response = await client.get("/api/v1/component-types")
+    assert response.status_code == 401
+```
+
+#### Component Types CRUD
+
+```python
+import pytest
+from httpx import AsyncClient
+
+
+@pytest.mark.asyncio
+async def test_create_component_type(
+    client: AsyncClient, auth_headers: dict
+):
+    payload = {
+        "name": "Falcon 500 Motor",
+        "slug": "falcon500",
+        "description": "Brushless motor by CTRE.",
+        "fields": [
+            {
+                "field_id": "device_id",
+                "label": "CAN Device ID",
+                "field_type": "number",
+                "required": True,
+                "min_value": 0,
+                "max_value": 62
+            },
+            {
+                "field_id": "firmware_version",
+                "label": "Firmware Version",
+                "field_type": "text",
+                "required": True,
+                "auto": True,
+                "auto_hint": "Paste from Phoenix Tuner X."
+            },
+            {
+                "field_id": "fault_flags",
+                "label": "Active Faults",
+                "field_type": "multiselect",
+                "options": ["Hardware Failure", "Under Voltage"]
+            }
+        ]
+    }
+
+    response = await client.post(
+        "/api/v1/component-types",
+        json=payload,
+        headers=auth_headers
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == "Falcon 500 Motor"
+    assert data["slug"] == "falcon500"
+    assert len(data["fields"]) == 3
+
+
+@pytest.mark.asyncio
+async def test_create_component_type_duplicate_slug(
+    client: AsyncClient, auth_headers: dict
+):
+    payload = {"name": "Falcon Motor", "slug": "falcon500"}
+
+    await client.post(
+        "/api/v1/component-types", json=payload, headers=auth_headers
+    )
+
+    response = await client.post(
+        "/api/v1/component-types",
+        json={"name": "Another Falcon", "slug": "falcon500"},
+        headers=auth_headers
+    )
+    assert response.status_code == 409
+
+
+@pytest.mark.asyncio
+async def test_get_component_type(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/component-types",
+        json={"name": "SPARK MAX", "slug": "sparkmax"},
+        headers=auth_headers
+    )
+
+    response = await client.get(
+        "/api/v1/component-types/sparkmax",
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    assert response.json()["slug"] == "sparkmax"
+
+
+@pytest.mark.asyncio
+async def test_list_component_types(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/component-types",
+        json={"name": "Falcon 500", "slug": "falcon500"},
+        headers=auth_headers
+    )
+    await client.post(
+        "/api/v1/component-types",
+        json={"name": "SPARK MAX", "slug": "sparkmax"},
+        headers=auth_headers
+    )
+
+    response = await client.get(
+        "/api/v1/component-types",
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    assert all(ct["is_archived"] is False for ct in data)
+
+
+@pytest.mark.asyncio
+async def test_archive_component_type(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/component-types",
+        json={"name": "To Archive", "slug": "toarchive"},
+        headers=auth_headers
+    )
+
+    response = await client.delete(
+        "/api/v1/component-types/toarchive",
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    assert response.json()["is_archived"] is True
+```
+
+#### Components CRUD
+
+```python
+import pytest
+from httpx import AsyncClient
+
+
+@pytest.mark.asyncio
+async def test_register_component(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/component-types",
+        json={"name": "Falcon 500", "slug": "falcon500"},
+        headers=auth_headers
+    )
+
+    response = await client.post(
+        "/api/v1/components",
+        json={
+            "component_type_slug": "falcon500",
+            "diagnostic_data": {"device_id": 5, "firmware_version": "24.1.0"},
+            "notes": "Test motor.",
+            "status": "available"
+        },
+        headers=auth_headers
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["code"].startswith("falcon500-")
+    assert data["status"] == "available"
+    assert "falcon500-" in data["code"]
+
+
+@pytest.mark.asyncio
+async def test_component_code_generation_sequential(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/component-types",
+        json={"name": "NavX", "slug": "navx"},
+        headers=auth_headers
+    )
+
+    codes = []
+    for _ in range(3):
+        response = await client.post(
+            "/api/v1/components",
+            json={"component_type_slug": "navx", "status": "available"},
+            headers=auth_headers
+        )
+        codes.append(response.json()["code"])
+
+    assert codes[0] != codes[1] != codes[2]
+    assert all(code.startswith("navx-") for code in codes)
+
+
+@pytest.mark.asyncio
+async def test_get_component(
+    client: AsyncClient, auth_headers: dict
+):
+    create_response = await client.post(
+        "/api/v1/components",
+        json={"component_type_slug": "falcon500", "status": "available"},
+        headers=auth_headers
+    )
+    code = create_response.json()["code"]
+
+    response = await client.get(
+        f"/api/v1/components/{code}",
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    assert response.json()["code"] == code
+
+
+@pytest.mark.asyncio
+async def test_update_component_status(
+    client: AsyncClient, auth_headers: dict
+):
+    create_response = await client.post(
+        "/api/v1/components",
+        json={"component_type_slug": "falcon500", "status": "available"},
+        headers=auth_headers
+    )
+    code = create_response.json()["code"]
+
+    response = await client.patch(
+        f"/api/v1/components/{code}",
+        json={"status": "in_use"},
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    assert response.json()["status"] == "in_use"
+
+
+@pytest.mark.asyncio
+async def test_update_component_with_loan_info(
+    client: AsyncClient, auth_headers: dict
+):
+    create_response = await client.post(
+        "/api/v1/components",
+        json={"component_type_slug": "falcon500", "status": "available"},
+        headers=auth_headers
+    )
+    code = create_response.json()["code"]
+
+    response = await client.patch(
+        f"/api/v1/components/{code}",
+        json={
+            "status": "loaned",
+            "loan_info": {
+                "borrower_name": "Team 4414",
+                "expected_return": "2025-04-01",
+                "notes": "Borrowed for offseason."
+            }
+        },
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "loaned"
+    assert data["loan_info"]["borrower_name"] == "Team 4414"
+
+
+@pytest.mark.asyncio
+async def test_component_history_logged(
+    client: AsyncClient, auth_headers: dict
+):
+    create_response = await client.post(
+        "/api/v1/components",
+        json={
+            "component_type_slug": "falcon500",
+            "status": "available",
+            "notes": "Initial notes."
+        },
+        headers=auth_headers
+    )
+    code = create_response.json()["code"]
+
+    await client.patch(
+        f"/api/v1/components/{code}",
+        json={"status": "in_use", "notes": "Updated notes."},
+        headers=auth_headers
+    )
+
+    response = await client.get(
+        f"/api/v1/components/{code}/history",
+        headers=auth_headers
+    )
+    assert response.status_code == 200
+    history = response.json()
+    assert len(history) >= 2
+
+
+@pytest.mark.asyncio
+async def test_diagnostic_data_validated(
+    client: AsyncClient, auth_headers: dict
+):
+    response = await client.post(
+        "/api/v1/components",
+        json={
+            "component_type_slug": "falcon500",
+            "diagnostic_data": {"unknown_field": "value"},
+            "status": "available"
+        },
+        headers=auth_headers
+    )
+    assert response.status_code == 422
+```
+
+#### Inventory
+
+```python
+import pytest
+from httpx import AsyncClient
+
+
+@pytest.mark.asyncio
+async def test_list_inventory(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/component-types",
+        json={"name": "Falcon 500", "slug": "falcon500"},
+        headers=auth_headers
+    )
+    for i in range(5):
+        await client.post(
+            "/api/v1/components",
+            json={"component_type_slug": "falcon500", "status": "available"},
+            headers=auth_headers
+        )
+
+    response = await client.get("/api/v1/inventory", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["items"]) == 5
+    assert data["total"] == 5
+    assert data["page"] == 1
+
+
+@pytest.mark.asyncio
+async def test_inventory_pagination(
+    client: AsyncClient, auth_headers: dict
+):
+    for i in range(25):
+        await client.post(
+            "/api/v1/components",
+            json={"component_type_slug": "falcon500", "status": "available"},
+            headers=auth_headers
+        )
+
+    response = await client.get(
+        "/api/v1/inventory?page=2&page_size=10",
+        headers=auth_headers
+    )
+    data = response.json()
+    assert len(data["items"]) == 10
+    assert data["page"] == 2
+    assert data["total_pages"] == 3
+
+
+@pytest.mark.asyncio
+async def test_inventory_filter_by_status(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/components",
+        json={"component_type_slug": "falcon500", "status": "available"},
+        headers=auth_headers
+    )
+    await client.post(
+        "/api/v1/components",
+        json={"component_type_slug": "falcon500", "status": "in_use"},
+        headers=auth_headers
+    )
+
+    response = await client.get(
+        "/api/v1/inventory?status=available",
+        headers=auth_headers
+    )
+    data = response.json()
+    assert all(item["status"] == "available" for item in data["items"])
+
+
+@pytest.mark.asyncio
+async def test_inventory_search(
+    client: AsyncClient, auth_headers: dict
+):
+    await client.post(
+        "/api/v1/components",
+        json={
+            "component_type_slug": "falcon500",
+            "status": "available",
+            "notes": "Left drivetrain motor."
+        },
+        headers=auth_headers
+    )
+    await client.post(
+        "/api/v1/components",
+        json={
+            "component_type_slug": "falcon500",
+            "status": "available",
+            "notes": "Right motor."
+        },
+        headers=auth_headers
+    )
+
+    response = await client.get(
+        "/api/v1/inventory?q=drivetrain",
+        headers=auth_headers
+    )
+    data = response.json()
+    assert data["total"] == 1
+    assert "drivetrain" in data["items"][0]["notes"]
+```
+
+### 17.6 Running the Tests
+
+```powershell
+# Run all E2E tests
+pytest tests/e2e -v
+
+# Run with coverage
+pytest tests/e2e -v --cov=app --cov-report=html
+
+# Run specific test file
+pytest tests/e2e/test_auth.py -v
+
+# Run tests matching a pattern
+pytest tests/e2e -v -k "component"
+
+# Run with verbose output and stop on first failure
+pytest tests/e2e -v -x
+```
+
+### 17.7 Using Playwright (Alternative HTTP Client)
+
+For more advanced scenarios (WebSocket testing, request interception), use Playwright's API:
+
+```python
+# Install Playwright
+pip install playwright
+playwright install
+
+# tests/e2e/conftest.py with Playwright
+import pytest
+from playwright.async_api import async_playwright
+
+
+@pytest.fixture(scope="function")
+async def api_request():
+    async with async_playwright() as p:
+        request = await p.api_request_context.new_context(
+            base_url="http://localhost:8000"
+        )
+        yield request
+        await request.dispose()
+
+
+# Example test with Playwright
+@pytest.mark.asyncio
+async def test_component_registration_playwright(api_request):
+    response = await api_request.post(
+        "/api/v1/components",
+        json={
+            "component_type_slug": "falcon500",
+            "status": "available"
+        },
+        headers={"Authorization": "Bearer ..."}
+    )
+    assert response.ok
+    data = await response.json()
+    assert "code" in data
+```
+
+### 17.8 CI/CD Integration
+
+Add to `.github/workflows/test.yml` (if using GitHub Actions):
+
+```yaml
+name: E2E Tests
+
+on: [push, pull_request]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx mongomock
+
+      - name: Run E2E tests
+        run: |
+          cd backend
+          pytest tests/e2e -v --tb=short
+        env:
+          MONGODB_URI: mongodb://localhost:27017/rookies_test
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SEED_KEY: ${{ secrets.SEED_KEY }}
+```
+
+### 17.9 Best Practices
+
+- **Isolate test data**: Each test function should work with a fresh database. Use `mongomock` for in-memory MongoDB or a dedicated test database.
+- **Use fixtures for setup**: Centralize auth token creation, component type seeding, and database cleanup in `conftest.py`.
+- **Test both success and failure paths**: Cover 200, 400, 401, 403, 404, 409, and 422 responses.
+- **Validate response schemas**: Check that response fields exist and have the correct types, not just status codes.
+- **Test edge cases**: Empty lists, maximum pagination, special characters in names, concurrent registrations.
+- **Keep tests independent**: Tests should not depend on execution order. Clean up state in fixtures or teardown.
+- **Use descriptive test names**: `test_register_component_generates_unique_code` is clearer than `test_component`.
+
+---
+
+*Document version: 1.2 — Added end-to-end API testing with Python, Playwright, and pytest.*

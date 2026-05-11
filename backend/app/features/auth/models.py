@@ -21,6 +21,10 @@ class Member(Document):
     updated_at = DateTimeField(default=_utcnow)
     created_by = StringField()
 
+    @property
+    def id(self) -> str:
+        return str(self.pk)
+
 
 def _update_updated_at(sender, document):
     document.updated_at = _utcnow()

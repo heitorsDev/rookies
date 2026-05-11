@@ -38,13 +38,13 @@ def _create_jwt(member: Member) -> str:
         "iat": now,
         "exp": now + timedelta(minutes=settings.jwt_expire_minutes),
     }
-    return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+    return jwt.encode(payload, settings.jwt_secret_value, algorithm=settings.jwt_algorithm)
 
 
 def decode_jwt(token: str) -> dict:
     try:
         return jwt.decode(
-            token, settings.jwt_secret, algorithms=[settings.jwt_algorithm]
+            token, settings.jwt_secret_value, algorithms=[settings.jwt_algorithm]
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -121,7 +121,7 @@ def activate_member(username: str, raw_token: str, password: str) -> Member:
     if not member.login_token_hash:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No activation token issued. Ask an admin to generate one.",
+            detail="Invalid username or token",
         )
 
     if not _verify_token(raw_token, member.login_token_hash):
@@ -155,7 +155,7 @@ def authenticate(username: str, password: str) -> str:
     if not is_activated(member):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Account not activated. Ask an admin for an activation token.",
+            detail="Invalid username or password",
         )
 
     if not _verify_password(password, member.password_hash):
@@ -181,13 +181,7 @@ def list_members() -> list[Member]:
     return list(Member.objects().order_by("name"))
 
 
-def seed_first_admin(name: str, username: str) -> tuple[Member, str]:
-    if Member.objects.count() > 0:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot seed: members already exist in the database",
-        )
-
+def seed_first_admin(name: str, username: str, password: str | None = None) -> tuple[Member, str]:
     member = Member(
         name=name,
         username=username,
@@ -196,5 +190,11 @@ def seed_first_admin(name: str, username: str) -> tuple[Member, str]:
     )
     member.save()
 
-    raw_token = generate_token(member)
+    if password:
+        raw_token = None
+        member.password_hash = _hash_password(password)
+        member.is_activated = True
+        member.save()
+    else:
+        raw_token = generate_token(member)
     return member, raw_token

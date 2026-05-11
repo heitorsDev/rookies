@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from app.config import settings
 from app.features.auth import service
@@ -14,6 +14,7 @@ from app.features.auth.schemas import (
     MemberOut,
     MessageResponse,
     TokenResponse,
+    SeedAdminRequest,
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -27,16 +28,25 @@ async def activate(body: ActivateRequest):
     return MessageResponse(detail="Account activated. You can now log in with your password.")
 
 
-@router.post("/login", response_model=LoginResponse)
-async def login(body: LoginRequest):
+@router.post("/login")
+async def login(body: LoginRequest, response: Response):
     access_token = await asyncio.to_thread(
         service.authenticate, body.username, body.password
     )
     member = await asyncio.to_thread(service.get_member_by_username, body.username)
-    return LoginResponse(
-        access_token=access_token,
-        member=MemberOut.model_validate(member),
+
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        samesite=settings.cookie_samesite,
+        secure=settings.cookie_secure,
+        max_age=settings.jwt_expire_minutes * 60,
     )
+
+    return {
+        "member": MemberOut.model_validate(member),
+    }
 
 
 @router.post("/members", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
@@ -66,6 +76,13 @@ async def list_members(admin: Member = Depends(require_admin)):
     return [await asyncio.to_thread(member_to_out, m) for m in members]
 
 
+@router.get("/members/me", response_model=MemberOut)
+async def get_current_member_info(member: Member = Depends(get_current_member)):
+    out = MemberOut.model_validate(member)
+    out.is_activated = service.is_activated(member)
+    return out
+
+
 @router.post("/tokens", response_model=TokenResponse)
 async def generate_login_token(
     username: str = Query(description="Username of the member"),
@@ -76,23 +93,32 @@ async def generate_login_token(
     return TokenResponse(token=raw_token, username=member.username)
 
 
+@router.post("/logout")
+async def logout(response: Response):
+    response.delete_cookie(
+        key="access_token",
+        httponly=True,
+        samesite=settings.cookie_samesite,
+        secure=settings.cookie_secure,
+    )
+    return {"detail": "Logged out successfully"}
+
+
 @router.post("/seed", response_model=TokenResponse)
-async def seed_first_admin(
-    body: MemberCreate,
-    seed_key: str = Query(description="The seed key from env"),
-):
-    if not settings.seed_key:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Seed endpoint is not configured",
-        )
-    if seed_key != settings.seed_key:
+async def seed_first_admin(body: SeedAdminRequest):
+    if settings.seed_key and body.seed_key != settings.seed_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid seed key",
         )
 
+    if settings.seed_key and not body.seed_key:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Seed key required",
+        )
+
     member, raw_token = await asyncio.to_thread(
-        service.seed_first_admin, body.name, body.username
+        service.seed_first_admin, body.name, body.username, body.password
     )
-    return TokenResponse(token=raw_token, username=member.username)
+    return TokenResponse(token=raw_token or "", username=member.username)

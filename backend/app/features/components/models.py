@@ -40,6 +40,10 @@ class SequenceCounter(Document):
     key = StringField(required=True, unique=True)
     value = IntField(default=0)
 
+    @property
+    def id(self) -> str:
+        return str(self.pk)
+
 
 class Component(Document):
     meta = {"collection": "components"}
@@ -64,3 +68,7 @@ class Component(Document):
     history = EmbeddedDocumentListField(HistoryEntry)
     created_at = DateTimeField(default=datetime.utcnow)
     updated_at = DateTimeField(default=datetime.utcnow)
+
+    @property
+    def id(self) -> str:
+        return str(self.pk)

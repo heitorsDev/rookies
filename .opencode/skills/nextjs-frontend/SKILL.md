@@ -19,5 +19,15 @@ compatibility: opencode
 - Use `NEXT_PUBLIC_API_URL` env variable for the backend base URL
 - Display errors using a toast notification system (sonner)
 
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [`backend/ROUTES.md`](../../backend/ROUTES.md) | Complete backend API route specifications |
+| [`frontend/README.md`](../../frontend/README.md) | Next.js project setup and basics |
+| [next-best-practices skill](../../.agents/skills/next-best-practices/SKILL.md) | Next.js App Router patterns and advanced topics |
+| [frontend-design skill](../../.agents/skills/frontend-design/SKILL.md) | UI design guidance |
+
 ## When to load me
 Load this skill when adding or modifying frontend pages, forms, data fetching, or UI components.

@@ -570,3 +570,13 @@ const results = await Product.aggregate([
 - **Mongoose Docs**: https://mongoosejs.com/docs/
 - **MongoDB University**: https://learn.mongodb.com/
 - **Atlas Docs**: https://www.mongodb.com/docs/atlas/
+
+---
+
+## Related Documentation
+
+| Document | Description |
+|---|---|
+| [`AGENTS.md`](../../../AGENTS.md) | Main project specification — business rules, data models, architecture overview |
+| [mongodb-odm skill](../../../.opencode/skills/mongodb-odm/SKILL.md) | MongoEngine ODM patterns for Python |
+| [python-fastapi skill](../../../.opencode/skills/python-fastapi/SKILL.md) | FastAPI backend development conventions |
