@@ -813,24 +813,24 @@ export function SchemaBuilder({
               )}
             </div>
           </div>
-
-          <div className="flex gap-3">
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isSubmitting || !name || !slug}
-            >
-              {isSubmitting ? "Saving..." : initialData ? "Update Type" : "Create Type"}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
-          </div>
         </div>
+      </div>
+
+      <div className="flex gap-3">
+        <Button
+          type="submit"
+          className="flex-1"
+          disabled={isSubmitting || !name || !slug}
+        >
+          {isSubmitting ? "Saving..." : initialData ? "Update Type" : "Create Type"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </Button>
       </div>
     </form>
   );
