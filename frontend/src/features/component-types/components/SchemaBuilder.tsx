@@ -240,6 +240,7 @@ function SortableFieldCard({
                 autoComplete="off"
               />
             </div>
+            {field.label && (
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Field ID
@@ -253,6 +254,7 @@ function SortableFieldCard({
                 autoComplete="off"
               />
             </div>
+          )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
