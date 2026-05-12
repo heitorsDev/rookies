@@ -36,9 +36,13 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   };
+
+  if (options.body) {
+    headers["Content-Type"] = "application/json";
+    headers["Acess-Control-Allow-Origin"] ="*";
+  }
 
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
