@@ -24,6 +24,7 @@ export interface HistoryEntry {
 export interface Component {
   code: string;
   component_type: string;
+  component_type_slug: string;
   status: string;
   diagnostic_data: Record<string, unknown>;
   notes?: string;

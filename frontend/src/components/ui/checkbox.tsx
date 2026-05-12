@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Check } from "lucide-react"
 
 interface CheckboxProps {
   checked: boolean
@@ -27,19 +26,13 @@ export function Checkbox({
         className
       )}
     >
-      <button
-        type="button"
-        role="checkbox"
-        aria-checked={checked}
+      <input
+        type="checkbox"
+        checked={checked}
         disabled={disabled}
-        onClick={() => !disabled && onCheckedChange(!checked)}
-        className={cn(
-          "h-4 w-4 rounded border border-input ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          checked && "bg-primary border-primary"
-        )}
-      >
-        {checked && <Check className="h-3 w-3 text-primary-foreground" />}
-      </button>
+        onChange={(e) => onCheckedChange(e.target.checked)}
+        className="h-4 w-4 rounded border border-input cursor-pointer accent-primary"
+      />
       {label && <span>{label}</span>}
     </label>
   )

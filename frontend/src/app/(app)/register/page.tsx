@@ -49,7 +49,7 @@ export default function RegisterPage({ searchParams }: Props) {
         setStatus(comp.status)
         setLoanInfo(comp.loan_info || {})
 
-        const typeSlug = params.code?.split("-")[0] || ""
+        const typeSlug = comp.component_type_slug || params.code?.split("-")[0] || ""
         const foundType = types.find(t => t.slug === typeSlug)
         if (foundType) {
           setSelectedType(foundType.slug)
