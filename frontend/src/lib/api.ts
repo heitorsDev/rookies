@@ -31,6 +31,11 @@ async function handleResponse<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function getToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("access_token");
+}
+
 async function request<T>(
   path: string,
   options: RequestInit = {}
@@ -40,10 +45,14 @@ async function request<T>(
     ...(options.headers as Record<string, string>),
   };
 
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
-    credentials: "include",
   });
 
   return handleResponse<T>(res);

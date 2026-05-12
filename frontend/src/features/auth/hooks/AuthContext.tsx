@@ -60,13 +60,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (username: string, password: string) => {
     const response = await authApi.login({ username, password });
+    localStorage.setItem("access_token", response.access_token);
     setMember(response.member);
     toast.success(`Welcome back, ${response.member.name}!`);
   };
 
   const logout = async () => {
-    await authApi.logout();
-    setMember(null);
+    try {
+      await authApi.logout();
+    } finally {
+      localStorage.removeItem("access_token");
+      setMember(null);
+    }
   };
 
   return (

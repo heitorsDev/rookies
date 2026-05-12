@@ -16,6 +16,7 @@ export interface MemberResponse {
 }
 
 export interface LoginResponse {
+  access_token: string;
   member: MemberResponse;
 }
 
