@@ -42,6 +42,7 @@ async function request<T>(
   if (options.body) {
     headers["Content-Type"] = "application/json";
     headers["Acess-Control-Allow-Origin"] ="*";
+    headers["ngrok-skip-browser-warning"] = "true"
   }
 
   const res = await fetch(`${API_URL}${path}`, {
