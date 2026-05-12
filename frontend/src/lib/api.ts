@@ -41,7 +41,8 @@ async function request<T>(
 
   if (options.body) {
     headers["Content-Type"] = "application/json";
-    headers["Acess-Control-Allow-Origin"] ="*";
+    headers["Acess-Control-Allow-Origin"] =" https://boxcar-sanctity-santa.ngrok-free.dev";
+    headers["Access-Control-Allow-Credentials"] = "true"
     headers["ngrok-skip-browser-warning"] = "true"
   }
 
