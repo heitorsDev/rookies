@@ -249,6 +249,130 @@ placeholder="field_id"
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Field Type
+              </label>
+              <select
+                value={field.field_type}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  const reset: Partial<FieldDefinition> = {
+                    field_type: newType,
+                    options: !["select", "multiselect"].includes(newType)
+                      ? []
+                      : field.options,
+                    min_value: undefined,
+                    max_value: undefined,
+                    unit: "",
+                    auto: newType === "auto",
+                    auto_hint: "",
+                  };
+                  onUpdate(reset);
+                }}
+                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              >
+                {FIELD_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Required
+              </label>
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={field.required ?? false}
+                  onChange={(e) => onUpdate({ required: e.target.checked })}
+                  className="h-4 w-4 rounded border-primary text-primary focus:ring-primary/20"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {field.required ? "Required" : "Optional"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {(field.field_type === "select" || field.field_type === "multiselect") && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Options
+              </label>
+              <div className="mt-1.5 space-y-2">
+                {field.options?.map((opt, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={opt}
+                      onChange={(e) => {
+                        const newOptions = [...(field.options ?? [])];
+                        newOptions[i] = e.target.value;
+                        onUpdate({ options: newOptions });
+                      }}
+                      className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      placeholder="Option label"
+                      autoComplete="off"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newOptions = field.options?.filter(
+                          (_, j) => j !== i
+                        );
+                        onUpdate({ options: newOptions });
+                      }}
+                      className="p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() =>
+                    onUpdate({
+                      options: [...(field.options ?? []), ""],
+                    })
+                  }
+                  className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add option
+                </button>
+              </div>
+            </div>
+          )}
+
+          {["text", "number", "select"].includes(field.field_type) && (
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Default Value
+              </label>
+              <input
+                type={field.field_type === "number" ? "number" : "text"}
+                value={field.default != null ? String(field.default) : ""}
+                onChange={(e) =>
+                  onUpdate({
+                    default:
+                      field.field_type === "number"
+                        ? e.target.value
+                          ? Number(e.target.value)
+                          : undefined
+                        : e.target.value,
+                  })
+                }
+                className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                placeholder="Optional default value"
+                autoComplete="off"
+              />
+            </div>
+          )}
+
           {field.field_type === "number" && (
             <div className="grid grid-cols-3 gap-4">
               <div>

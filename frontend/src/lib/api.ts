@@ -46,7 +46,7 @@ async function request<T>(
     headers["ngrok-skip-browser-warning"] = "true"
   }
 
-  const res = await fetch(`${path}`, {
+  const res = await fetch(`${API_URL}${path}`, {
     ...options,
     headers,
     credentials: "include",
