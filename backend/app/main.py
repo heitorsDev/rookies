@@ -24,14 +24,16 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
-
+print(settings.frontend_origin)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_origin],
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 app.include_router(auth_router, prefix="/api/v1")

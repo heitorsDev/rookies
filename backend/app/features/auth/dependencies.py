@@ -1,4 +1,4 @@
-from fastapi import Cookie, Depends, HTTPException, status
+from fastapi import Cookie, Depends, Header, HTTPException, status
 
 from app.features.auth.models import Member
 from app.features.auth.service import decode_jwt, get_member_by_username
@@ -6,8 +6,13 @@ from app.features.auth.service import decode_jwt, get_member_by_username
 
 async def get_current_member(
     access_token: str | None = Cookie(None),
+    authorization: str | None = Header(None),
 ) -> Member:
     token = access_token
+    if not token and authorization:
+        parts = authorization.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
 
     if not token:
         raise HTTPException(

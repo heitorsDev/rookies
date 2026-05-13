@@ -36,16 +36,9 @@ async def client() -> "AsyncClient":
 async def admin_token(client: "AsyncClient") -> str:
     response = await client.post(
         "/api/v1/auth/seed",
-        json={"name": "Test Admin", "username": "testadmin", "role": "admin", "seed_key": "test-seed-key"},
+        json={"name": "Test Admin", "username": "testadmin", "role": "admin", "password": "TestPass123!", "seed_key": "test-seed-key"},
     )
     assert response.status_code == 200, f"Seed failed: {response.text}"
-    token = response.json()["token"]
-
-    activate_response = await client.post(
-        "/api/v1/auth/activate",
-        json={"username": "testadmin", "token": token, "password": "TestPass123!"},
-    )
-    assert activate_response.status_code == 200, f"Activate failed: {activate_response.text}"
 
     login_response = await client.post(
         "/api/v1/auth/login",

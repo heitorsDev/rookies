@@ -39,8 +39,9 @@ async def login(body: LoginRequest, response: Response):
         key="access_token",
         value=access_token,
         httponly=True,
-        samesite=settings.cookie_samesite,
-        secure=settings.cookie_secure,
+        samesite='lax',
+        
+        secure=True,
         max_age=settings.jwt_expire_minutes * 60,
     )
 

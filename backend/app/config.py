@@ -3,13 +3,13 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     mongodb_uri: str = "mongodb://localhost:27017/rookies"
-    frontend_origin: str = "http://localhost:3000"
+    frontend_origin: str = ".heitorsdev.com"
     jwt_secret: str = ""
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
     seed_key: str = ""
     cookie_secure: bool = True
-    cookie_samesite: str = "lax"
+    cookie_samesite: str = "none"
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 

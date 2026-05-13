@@ -13,7 +13,7 @@ async def test_health_check(client: AsyncClient):
 async def test_seed_first_admin(client: AsyncClient):
     response = await client.post(
         "/api/v1/auth/seed",
-        json={"name": "Admin User", "username": "admin", "seed_key": "test-seed-key"},
+        json={"name": "Admin User", "username": "admin", "password": "AdminPass123!", "seed_key": "test-seed-key"},
     )
     assert response.status_code == 200
     data = response.json()
@@ -25,7 +25,7 @@ async def test_seed_first_admin(client: AsyncClient):
 async def test_seed_fails_with_invalid_key(client: AsyncClient):
     response = await client.post(
         "/api/v1/auth/seed",
-        json={"name": "Admin", "username": "admin", "seed_key": "wrong-key"},
+        json={"name": "Admin", "username": "admin", "password": "AdminPass123!", "seed_key": "wrong-key"},
     )
     assert response.status_code == 403
 
@@ -34,7 +34,7 @@ async def test_seed_fails_with_invalid_key(client: AsyncClient):
 async def test_seed_fails_when_members_exist(client: AsyncClient, admin_token: str):
     response = await client.post(
         "/api/v1/auth/seed",
-        json={"name": "Another Admin", "username": "anotheradmin", "seed_key": "test-seed-key"},
+        json={"name": "Another Admin", "username": "anotheradmin", "password": "AdminPass123!", "seed_key": "test-seed-key"},
     )
     assert response.status_code == 400
 

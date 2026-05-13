@@ -48,5 +48,5 @@ class MessageResponse(BaseModel):
 class SeedAdminRequest(BaseModel):
     name: str
     username: str
-    password: str
+    password: str | None = None
     seed_key: str | None = None
